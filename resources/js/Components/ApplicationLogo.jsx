@@ -1,0 +1,10 @@
+export default function ApplicationLogo({ className = '', ...props }) {
+  return (
+    <img
+      src="/images/preview.jpg"
+      alt="MediTrack Logo"
+      className={`h-20 w-auto object-contain ${className}`}
+      {...props}
+    />
+  );
+}

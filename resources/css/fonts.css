@@ -1,0 +1,104 @@
+/* MediTrack Premium Font System */
+
+/* Global font application */
+* {
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-variant-ligatures: common-ligatures;
+}
+
+/* Base body font */
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings: 'slnt' 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings with Poppins for impact */
+h1, h2, h3, h4, h5, h6,
+.heading-font {
+  font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Premium sections with Playfair */
+.premium-font,
+.brand-font,
+.logo-font {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+}
+
+/* Code and data with JetBrains Mono */
+code, pre, 
+.mono-font,
+.data-font,
+.number-font {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+/* Button text optimization */
+button, .btn {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+/* Form inputs */
+input, textarea, select {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Table data */
+table, td, th {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Navigation */
+nav, .nav-item {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 500;
+}
+
+/* Cards and components */
+.card, .component {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Responsive font sizes */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+}
+
+/* Font weight utilities */
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+.font-black { font-weight: 900; }
+
+/* Letter spacing utilities */
+.tracking-tighter { letter-spacing: -0.05em; }
+.tracking-tight { letter-spacing: -0.025em; }
+.tracking-normal { letter-spacing: 0em; }
+.tracking-wide { letter-spacing: 0.025em; }
+.tracking-wider { letter-spacing: 0.05em; }
+.tracking-widest { letter-spacing: 0.1em; }
