@@ -611,26 +611,21 @@ export default function Sales() {
         }`}
         style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
       >
-        {/* Floating Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className={`absolute top-1/4 left-1/4 w-64 h-64 ${darkMode ? 'bg-blue-500/10' : 'bg-yellow-200/30'} rounded-full blur-3xl animate-pulse`}></div>
-          <div className={`absolute top-3/4 right-1/4 w-96 h-96 ${darkMode ? 'bg-purple-500/10' : 'bg-pink-200/30'} rounded-full blur-3xl animate-pulse delay-1000`}></div>
-          <div className={`absolute top-1/2 left-1/2 w-80 h-80 ${darkMode ? 'bg-indigo-500/10' : 'bg-blue-200/30'} rounded-full blur-3xl animate-pulse delay-500`}></div>
-        </div>
+        {/* Floating Elements Removed */}
 
         <div className="relative z-10 p-4 sm:p-6">
         {/* Enhanced Modern Header */}
-        <div className={`backdrop-blur-xl ${darkMode ? 'bg-gray-800/30' : 'bg-white/30'} rounded-2xl p-6 mb-8 border ${darkMode ? 'border-gray-700/50' : 'border-white/50'} shadow-xl`}>
+        <div className={`bg-white rounded-xl p-6 mb-8 border border-slate-200 shadow-sm`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-gradient-to-br from-yellow-400 to-orange-500'} flex items-center justify-center shadow-lg`}>
-                <i className="bi bi-receipt text-2xl text-white"></i>
+              <div className={`w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center`}>
+                <i className="bi bi-receipt text-3xl text-orange-600"></i>
               </div>
               <div>
-                <h1 className={`text-4xl font-black ${darkMode ? 'bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent' : 'bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent'}`}>
+                <h1 className={`text-3xl font-bold mb-1 text-slate-800`}>
                   Sales Management
                 </h1>
-                <p className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-2`}>
+                <p className={`text-base text-slate-500 mt-1`}>
                   Track revenue, manage transactions, and analyze sales performance
                 </p>
                 <div className="flex items-center gap-4 mt-3">
@@ -725,99 +720,95 @@ export default function Sales() {
         {/* Modern Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Revenue Card */}
-          <div className={`group relative overflow-hidden backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-green-500/20 to-emerald-600/20 border-green-500/30' : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200/50'} rounded-2xl p-6 border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105`}>
+          <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors`}>
             <div className="flex items-center justify-between">
               <div>
-                <div className={`text-sm font-medium ${darkMode ? 'text-green-400' : 'text-green-600'} mb-2`}>
+                <div className={`text-sm font-medium text-slate-500 mb-1`}>
                   Total Revenue
                 </div>
-                <div className={`text-3xl font-black ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>
+                <div className={`text-2xl font-bold text-slate-800 mb-1`}>
                   UGX {totalRevenue.toLocaleString()}
                 </div>
-                <div className={`text-sm ${darkMode ? 'text-green-300' : 'text-green-600'} flex items-center gap-1`}>
+                <div className={`text-sm text-green-600 flex items-center gap-1`}>
                   <i className="bi bi-arrow-up"></i>
                   <span>+12% from last month</span>
                 </div>
               </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-green-500/20' : 'bg-green-100'} flex items-center justify-center`}>
-                <i className={`bi bi-cash-coin text-2xl ${darkMode ? 'text-green-400' : 'text-green-600'}`}></i>
+              <div className={`w-12 h-12 rounded-lg bg-green-50 border border-green-100 flex items-center justify-center`}>
+                <i className={`bi bi-cash-coin text-xl text-green-600`}></i>
               </div>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
 
           {/* Average Sale Card */}
-          <div className={`group relative overflow-hidden backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-accent-500/20 to-primary-600/20 border-accent-500/30' : 'bg-gradient-to-br from-accent-50 to-primary-50 border-accent-200/50'} rounded-2xl p-6 border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105`}>
+          <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors`}>
             <div className="flex items-center justify-between">
               <div>
-                <div className={`text-sm font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-2`}>
+                <div className={`text-sm font-medium text-slate-500 mb-1`}>
                   Average Sale
                 </div>
-                <div className={`text-3xl font-black ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>
+                <div className={`text-2xl font-bold text-slate-800 mb-1`}>
                   UGX {totalTransactions > 0 ? Math.round(totalRevenue / totalTransactions).toLocaleString() : '0'}
                 </div>
-                <div className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'} flex items-center gap-1`}>
+                <div className={`text-sm text-blue-600 flex items-center gap-1`}>
                   <i className="bi bi-arrow-up"></i>
                   <span>+8% improvement</span>
                 </div>
               </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-blue-500/20' : 'bg-blue-100'} flex items-center justify-center`}>
-                <i className={`bi bi-graph-up text-2xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
+              <div className={`w-12 h-12 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center`}>
+                <i className={`bi bi-graph-up text-xl text-blue-600`}></i>
               </div>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-accent-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
 
           {/* Top Medicine Card */}
-          <div className={`group relative overflow-hidden backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-primary-500/20 to-neutral-600/20 border-primary-500/30' : 'bg-gradient-to-br from-primary-50 to-neutral-50 border-primary-200/50'} rounded-2xl p-6 border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105`}>
+          <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors`}>
             <div className="flex items-center justify-between">
               <div>
-                <div className={`text-sm font-medium ${darkMode ? 'text-purple-400' : 'text-purple-600'} mb-2`}>
+                <div className={`text-sm font-medium text-slate-500 mb-1`}>
                   Top Medicine
                 </div>
-                <div className={`text-xl font-black ${darkMode ? 'text-white' : 'text-gray-800'} mb-1 truncate`}>
+                <div className={`text-xl font-bold text-slate-800 mb-1 truncate`}>
                   {topMedicine}
                 </div>
-                <div className={`text-sm ${darkMode ? 'text-purple-300' : 'text-purple-600'} flex items-center gap-1`}>
+                <div className={`text-sm text-purple-600 flex items-center gap-1`}>
                   <i className="bi bi-star-fill"></i>
                   <span>Best seller</span>
                 </div>
               </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-purple-500/20' : 'bg-purple-100'} flex items-center justify-center`}>
-                <i className={`bi bi-capsule-pill text-2xl ${darkMode ? 'text-purple-400' : 'text-purple-600'}`}></i>
+              <div className={`w-12 h-12 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center`}>
+                <i className={`bi bi-capsule-pill text-xl text-purple-600`}></i>
               </div>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
 
           {/* Today's Sales Card */}
-          <div className={`group relative overflow-hidden backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-orange-500/20 to-red-600/20 border-orange-500/30' : 'bg-gradient-to-br from-orange-50 to-red-50 border-orange-200/50'} rounded-2xl p-6 border shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105`}>
+          <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors`}>
             <div className="flex items-center justify-between">
               <div>
-                <div className={`text-sm font-medium ${darkMode ? 'text-orange-400' : 'text-orange-600'} mb-2`}>
+                <div className={`text-sm font-medium text-slate-500 mb-1`}>
                   Today's Sales
                 </div>
-                <div className={`text-3xl font-black ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>
+                <div className={`text-2xl font-bold text-slate-800 mb-1`}>
                   {filtered.filter(s => s.date === new Date().toISOString().split('T')[0]).length}
                 </div>
-                <div className={`text-sm ${darkMode ? 'text-orange-300' : 'text-orange-600'} flex items-center gap-1`}>
+                <div className={`text-sm text-orange-600 flex items-center gap-1`}>
                   <i className="bi bi-arrow-up"></i>
                   <span>+24% vs yesterday</span>
                 </div>
               </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-orange-500/20' : 'bg-orange-100'} flex items-center justify-center`}>
-                <i className={`bi bi-receipt-cutoff text-2xl ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}></i>
+              <div className={`w-12 h-12 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center`}>
+                <i className={`bi bi-receipt-cutoff text-xl text-orange-600`}></i>
               </div>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
         </div>
 
         {/* Enhanced Filters */}
-        <div className={`backdrop-blur-xl ${darkMode ? 'bg-gray-800/30' : 'bg-white/30'} rounded-2xl p-6 border ${darkMode ? 'border-gray-700/50' : 'border-white/50'} shadow-xl mb-6`}>
+        <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-6`}>
           <div className="flex items-center gap-3 mb-4">
-            <i className={`bi bi-funnel text-xl ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
-            <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Filter & Search Sales</h3>
+            <i className={`bi bi-funnel text-xl text-blue-600`}></i>
+            <h3 className={`text-lg font-bold text-slate-800`}>Filter & Search Sales</h3>
             {(query || dateFrom || dateTo || paymentFilter || customerFilter) && (
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${darkMode ? 'bg-slate-600/30 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
                 {[query, dateFrom, dateTo, paymentFilter, customerFilter].filter(Boolean).length} active filters
@@ -959,10 +950,10 @@ export default function Sales() {
         </div>
 
         {/* Enhanced Modern Table with Better Borders */}
-        <div className={`backdrop-blur-xl ${darkMode ? 'bg-gray-800/30' : 'bg-white/30'} rounded-2xl border-2 ${darkMode ? 'border-gray-600/50' : 'border-gray-200/50'} shadow-2xl overflow-hidden`}>
+        <div className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden`}>
           <div className="overflow-x-auto">
             <table className="min-w-full border-collapse">
-              <thead className={`${darkMode ? 'bg-gradient-to-r from-slate-700/40 to-gray-700/40' : 'bg-gradient-to-r from-slate-100 to-gray-100'} border-b-2 ${darkMode ? 'border-gray-600/50' : 'border-gray-300'}`}>
+              <thead className={`bg-slate-50 border-b border-gray-200`}>
                 <tr>
                   <th className={`px-6 py-4 text-left text-xs font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'} uppercase tracking-wider border-r ${darkMode ? 'border-gray-600/30' : 'border-gray-300'}`}>
                     <div className="flex items-center gap-2">
@@ -1110,7 +1101,7 @@ export default function Sales() {
                       
                       <td className={`px-6 py-4 whitespace-nowrap border-r ${darkMode ? 'border-gray-600/20' : 'border-gray-200'}`}>
                         <div className="flex flex-col space-y-2">
-                          <div className={`text-lg font-black ${sale.status === 'refunded' ? 'line-through text-red-500' : sale.status === 'partially_refunded' ? 'text-orange-600' : (darkMode ? 'text-green-400' : 'text-green-600')}`}>
+                          <div className={`text-lg font-bold ${sale.status === 'refunded' ? 'line-through text-red-500' : sale.status === 'partially_refunded' ? 'text-orange-600' : (darkMode ? 'text-green-400' : 'text-green-600')}`}>
                             UGX {Number(sale.total_price || sale.total || 0).toLocaleString()}
                           </div>
                           
@@ -1255,9 +1246,9 @@ export default function Sales() {
                 {/* Left Column - Customer & Invoice Info */}
                 <div className="lg:col-span-1">
                   {/* Invoice Header */}
-                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-4 mb-6 border border-yellow-200">
+                  <div className="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
                     <div className="flex items-center gap-3 mb-3">
-                      <i className="bi bi-receipt-cutoff text-yellow-600 text-xl"></i>
+                      <i className="bi bi-receipt-cutoff text-orange-600 text-xl"></i>
                       <div>
                         <h4 className="font-bold text-gray-900">Invoice Details</h4>
                         <p className="text-xs text-gray-600">Transaction information</p>
@@ -1282,9 +1273,9 @@ export default function Sales() {
                   </div>
 
                   {/* Customer Information */}
-                  <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-xl p-4 border border-accent-200">
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-accent-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
                         <span className="text-sm font-bold text-blue-600">
                           {selectedSale.customer && typeof selectedSale.customer === 'string' ? selectedSale.customer.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?'}
                         </span>
@@ -1313,10 +1304,10 @@ export default function Sales() {
                           </div>
                         </div>
                       )}
-                      <div className="pt-2 border-t border-blue-200">
+                      <div className="pt-2 border-t border-slate-200">
                         <button
                           onClick={() => window.location.href = `/customers?search=${encodeURIComponent(selectedSale.customer)}`}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 transition-colors text-sm font-medium"
                         >
                           <i className="bi bi-person-circle"></i>
                           View Customer Profile
@@ -1331,9 +1322,9 @@ export default function Sales() {
                   <div className="grid grid-cols-1 gap-6">
 
                     {/* Medicine Information */}
-                    <div className="bg-gradient-to-br from-primary-50 to-neutral-50 rounded-xl p-4 border border-primary-200">
+                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-3 mb-4">
-                        <i className="bi bi-capsule-pill text-primary-600 text-xl"></i>
+                        <i className="bi bi-capsule-pill text-purple-600 text-xl"></i>
                         <div>
                           <h4 className="font-bold text-gray-900">Medicine Details</h4>
                           <p className="text-xs text-gray-600">Product information</p>
@@ -1352,10 +1343,10 @@ export default function Sales() {
                             <div className="font-medium text-gray-900">{selectedSale.medicine?.brand || 'N/A'}</div>
                           </div>
                         )}
-                        <div className="pt-2 border-t border-purple-200">
+                        <div className="pt-2 border-t border-slate-200">
                           <button
                             onClick={() => window.location.href = '/medicines'}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50 transition-colors text-sm font-medium"
                           >
                             <i className="bi bi-box-seam"></i>
                             View Medicine Inventory
@@ -1365,9 +1356,9 @@ export default function Sales() {
                     </div>
 
                     {/* Transaction Summary */}
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-3 mb-4">
-                        <i className="bi bi-calculator text-green-600 text-xl"></i>
+                        <i className="bi bi-calculator text-slate-600 text-xl"></i>
                         <div>
                           <h4 className="font-bold text-gray-900">Transaction Summary</h4>
                           <p className="text-xs text-gray-600">Pricing and payment details</p>
@@ -1375,25 +1366,25 @@ export default function Sales() {
                       </div>
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-white rounded-lg p-3 border border-green-200">
+                          <div className="bg-white rounded-md p-3 border border-slate-200">
                             <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Quantity</div>
                             <div className="text-xl font-bold text-gray-900">{selectedSale.quantity}</div>
                           </div>
                           {selectedSale.unit_price && (
-                            <div className="bg-white rounded-lg p-3 border border-green-200">
+                            <div className="bg-white rounded-md p-3 border border-slate-200">
                               <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Unit Price</div>
                               <div className="text-xl font-bold text-gray-900">UGX {Number(selectedSale.unit_price).toLocaleString()}</div>
                             </div>
                           )}
                         </div>
                         
-                        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg p-4 text-white">
+                        <div className="bg-white rounded-md p-4 border border-slate-300">
                           <div className="flex justify-between items-center">
                             <div>
-                              <div className="text-xs text-green-100 uppercase tracking-wide mb-1">Total Amount</div>
-                              <div className="text-2xl font-black">UGX {Number(selectedSale.total_price || selectedSale.total || 0).toLocaleString()}</div>
+                              <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">Total Amount</div>
+                              <div className="text-2xl font-bold text-slate-900">UGX {Number(selectedSale.total_price || selectedSale.total || 0).toLocaleString()}</div>
                             </div>
-                            <i className="bi bi-cash-coin text-3xl text-green-200"></i>
+                            <i className="bi bi-cash-coin text-3xl text-green-600"></i>
                           </div>
                         </div>
 
@@ -1416,7 +1407,7 @@ export default function Sales() {
                 {/* Additional Information Section */}
                 {(selectedSale.served_by || selectedSale.notes) && (
                   <div className="lg:col-span-3 mt-6">
-                    <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-200">
+                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center gap-2 mb-4">
                         <i className="bi bi-info-circle text-gray-600 text-xl"></i>
                         <h4 className="font-bold text-gray-900">Additional Information</h4>
@@ -1479,40 +1470,23 @@ export default function Sales() {
 
         {/* Enhanced Create Sale Modal */}
         <Modal show={isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="4xl">
-          <div className="relative bg-white overflow-hidden">
-            {/* Decorative Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 opacity-50"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-green-200 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-            
+          <div className="relative bg-white overflow-hidden rounded-xl">
             {/* Modal Header */}
-            <div className="relative px-5 py-4 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 border-b-4 border-green-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl border-2 border-white/30">
-                      <i className="bi bi-receipt text-2xl text-white"></i>
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center">
-                      <i className="bi bi-plus text-xs text-white font-bold"></i>
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white drop-shadow-lg">Create New Sale</h2>
-                    <p className="text-xs text-green-50 mt-1 font-medium">
-                      <i className="bi bi-info-circle mr-1"></i>
-                      Record a new sale transaction
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:rotate-90 border border-white/20"
-                  onClick={() => setIsCreateOpen(false)}
-                  aria-label="Close"
-                >
-                  <i className="bi bi-x-lg text-xl"></i>
-                </button>
+            <div className="relative px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Create New Sale</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Record a new sale transaction
+                </p>
               </div>
+              <button
+                type="button"
+                className="w-8 h-8 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
+                onClick={() => setIsCreateOpen(false)}
+                aria-label="Close"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
 
             <form onSubmit={handleCreateSale} noValidate className="relative p-5 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto">
@@ -2147,39 +2121,22 @@ export default function Sales() {
         {/* Edit Sale Modal */}
         <Modal show={isEditOpen} onClose={() => setIsEditOpen(false)} maxWidth="3xl">
           <div className="relative bg-white overflow-hidden">
-            {/* Decorative Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-50 via-primary-50 to-neutral-50 opacity-50"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-accent-200 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-            
             {/* Modal Header */}
-            <div className="relative px-6 py-5 bg-gradient-to-r from-accent-600 via-primary-600 to-primary-700 border-b-4 border-accent-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl border-2 border-white/30">
-                      <i className="bi bi-pencil-square text-3xl text-white"></i>
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center animate-pulse">
-                      <i className="bi bi-lightning-fill text-xs text-white"></i>
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-black text-white drop-shadow-lg">Edit Sale Transaction</h2>
-                    <p className="text-sm text-cyan-50 mt-1 font-medium flex items-center gap-2">
-                      <i className="bi bi-info-circle"></i>
-                      Update sale details and transaction information
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:rotate-90 border border-white/20"
-                  onClick={() => setIsEditOpen(false)}
-                  aria-label="Close"
-                >
-                  <i className="bi bi-x-lg text-2xl"></i>
-                </button>
+            <div className="relative px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Edit Sale Transaction</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Update sale details and transaction information
+                </p>
               </div>
+              <button
+                type="button"
+                className="w-8 h-8 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
+                onClick={() => setIsEditOpen(false)}
+                aria-label="Close"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
 
             {selectedSale && (
@@ -2497,39 +2454,22 @@ export default function Sales() {
         {/* Refund Modal */}
         <Modal show={isRefundOpen} onClose={() => setIsRefundOpen(false)} maxWidth="2xl">
           <div className="relative bg-white overflow-hidden">
-            {/* Decorative Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-neutral-50 to-neutral-100 opacity-50"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary-200 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-            
             {/* Modal Header */}
-            <div className="relative px-6 py-5 bg-gradient-to-r from-primary-600 via-neutral-600 to-neutral-700 border-b-4 border-primary-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl border-2 border-white/30">
-                      <i className="bi bi-arrow-return-left text-3xl text-white"></i>
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center animate-pulse">
-                      <i className="bi bi-exclamation text-xs text-white font-bold"></i>
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-black text-white drop-shadow-lg">Process Refund</h2>
-                    <p className="text-sm text-purple-50 mt-1 font-medium flex items-center gap-2">
-                      <i className="bi bi-shield-check"></i>
-                      Issue a refund for this sale transaction
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:rotate-90 border border-white/20"
-                  onClick={() => setIsRefundOpen(false)}
-                  aria-label="Close"
-                >
-                  <i className="bi bi-x-lg text-2xl"></i>
-                </button>
+            <div className="relative px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Process Refund</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Issue a refund for this sale transaction
+                </p>
               </div>
+              <button
+                type="button"
+                className="w-8 h-8 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
+                onClick={() => setIsRefundOpen(false)}
+                aria-label="Close"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
 
             {selectedSale && (
@@ -2719,39 +2659,22 @@ export default function Sales() {
         {/* Delete Sale Modal */}
         <Modal show={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} maxWidth="2xl">
           <div className="relative bg-white overflow-hidden">
-            {/* Decorative Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-orange-50 to-pink-50 opacity-50"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-red-200 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-            
             {/* Modal Header */}
-            <div className="relative px-6 py-5 bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 border-b-4 border-red-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl border-2 border-white/30 animate-pulse">
-                      <i className="bi bi-exclamation-triangle-fill text-3xl text-white"></i>
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-7 h-7 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center animate-bounce">
-                      <i className="bi bi-exclamation text-sm text-white font-bold"></i>
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-black text-white drop-shadow-lg">Delete Sale</h2>
-                    <p className="text-sm text-red-50 mt-1 font-medium flex items-center gap-2">
-                      <i className="bi bi-shield-exclamation"></i>
-                      This action cannot be undone - proceed with caution
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:rotate-90 border border-white/20"
-                  onClick={() => setIsDeleteOpen(false)}
-                  aria-label="Close"
-                >
-                  <i className="bi bi-x-lg text-2xl"></i>
-                </button>
+            <div className="relative px-6 py-4 bg-white border-b border-red-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-red-700">Delete Sale</h2>
+                <p className="text-sm text-red-600/70 mt-1">
+                  This action cannot be undone - proceed with caution
+                </p>
               </div>
+              <button
+                type="button"
+                className="w-8 h-8 rounded-md hover:bg-red-50 flex items-center justify-center text-slate-500 transition-colors"
+                onClick={() => setIsDeleteOpen(false)}
+                aria-label="Close"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
 
             {selectedSale && (

@@ -513,27 +513,21 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
         }`}
         style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
       >
-        {/* Animated Background Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className={`absolute top-1/4 left-1/4 w-96 h-96 ${darkMode ? 'bg-purple-500/10' : 'bg-blue-300/20'} rounded-full blur-3xl animate-pulse`}></div>
-          <div className={`absolute top-3/4 right-1/4 w-96 h-96 ${darkMode ? 'bg-indigo-500/10' : 'bg-indigo-300/20'} rounded-full blur-3xl animate-pulse`} style={{ animationDelay: '1s' }}></div>
-          <div className={`absolute top-1/2 left-1/2 w-96 h-96 ${darkMode ? 'bg-blue-500/10' : 'bg-purple-300/20'} rounded-full blur-3xl animate-pulse`} style={{ animationDelay: '0.5s' }}></div>
-        </div>
+        {/* Animated Background Elements Removed */}
 
         <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           {/* Professional Header */}
-          <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-3xl p-8 mb-8 border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-2xl`}>
+          <div className={`bg-white rounded-xl p-6 mb-8 border border-slate-200 shadow-sm`}>
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div className="flex items-center gap-6">
-                <div className={`relative w-20 h-20 rounded-3xl bg-gradient-to-br from-accent-500 via-primary-500 to-primary-600 flex items-center justify-center shadow-2xl group`}>
-                  <i className="bi bi-calculator text-3xl text-white"></i>
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-accent-400 to-primary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+                <div className={`w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100`}>
+                  <i className="bi bi-calculator text-3xl text-blue-600"></i>
                 </div>
                 <div>
-                  <h1 className={`text-5xl font-black mb-2 ${darkMode ? 'bg-gradient-to-r from-accent-400 via-primary-400 to-primary-400 bg-clip-text text-transparent' : 'bg-gradient-to-r from-accent-600 via-primary-600 to-primary-600 bg-clip-text text-transparent'}`}>
+                  <h1 className={`text-3xl font-bold mb-1 text-slate-800`}>
                     Point of Sale
                   </h1>
-                  <p className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>
+                  <p className={`text-base text-slate-500 mb-3`}>
                     Advanced pharmacy transaction processing system
                   </p>
                   <div className="flex items-center gap-3 flex-wrap">
@@ -541,11 +535,11 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                       <i className="bi bi-shield-check"></i>
                       <span className="text-sm font-semibold">Secure Transactions</span>
                     </div>
-                    <div className={`px-4 py-2 rounded-full ${darkMode ? 'bg-white/10 text-gray-300 border border-white/20' : 'bg-gray-100 text-gray-700 border border-gray-200'}`}>
+                    <div className={`px-4 py-2 rounded-full bg-gray-50 text-gray-700 border border-gray-200`}>
                       <span className="text-sm font-medium">Terminal: {terminals?.[0]?.name || 'Main'}</span>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-400 border border-blue-400/30">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <span className="text-sm font-semibold">Live System</span>
                     </div>
                   </div>
@@ -592,7 +586,7 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                 {/* Quick Actions */}
                 <a
                   href="/customers"
-                  className="px-6 py-3 bg-gradient-to-r from-accent-500 to-primary-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
                   <i className="bi bi-people-fill"></i>
                   <span>Customers</span>
@@ -616,9 +610,9 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
             {/* Left Panel - Product Search & Cart */}
             <div className="lg:col-span-2 space-y-6">
               {/* Advanced Search Section */}
-              <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-2xl p-6 border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-xl`}>
+              <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm`}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-12 h-12 rounded-2xl ${darkMode ? 'bg-blue-500/30' : 'bg-blue-100'} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100`}>
                     <i className={`bi bi-search text-xl ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}></i>
                   </div>
                   <div>
@@ -662,13 +656,13 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                       return (
                         <div
                           key={medicine.id}
-                          className={`group p-4 ${darkMode ? 'hover:bg-white/10' : 'hover:bg-white/80'} cursor-pointer border-b ${darkMode ? 'border-white/10' : 'border-gray-100'} last:border-b-0 transition-all duration-300 hover:shadow-lg`}
+                          className={`group p-4 hover:bg-slate-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors`}
                           onClick={() => addToCart(medicine)}
                         >
                           <div className="flex justify-between items-center">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <div className={`w-10 h-10 rounded-xl ${darkMode ? 'bg-white/10' : 'bg-gray-100'} flex items-center justify-center text-lg group-hover:scale-110 transition-transform`}>
+                                <div className={`w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-lg`}>
                                   {categoryIcon}
                                 </div>
                                 <div>
@@ -714,15 +708,15 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
               </div>
 
               {/* Quick Add Popular Medicines */}
-              <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-2xl p-6 border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-xl`}>
+              <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm`}>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-2xl ${darkMode ? 'bg-purple-500/30' : 'bg-purple-100'} flex items-center justify-center`}>
-                      <i className={`bi bi-lightning-charge-fill text-xl ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}></i>
+                    <div className={`w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center border border-purple-100`}>
+                      <i className={`bi bi-lightning-charge-fill text-xl text-purple-600`}></i>
                     </div>
                     <div>
-                      <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Quick Add - Popular Items</h3>
-                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Fast access to frequently sold medicines</p>
+                      <h3 className={`text-lg font-bold text-slate-800`}>Quick Add - Popular Items</h3>
+                      <p className={`text-sm text-slate-500`}>Fast access to frequently sold medicines</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -741,10 +735,10 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                       <button
                         key={medicine.id}
                         onClick={() => addToCart(medicine)}
-                        className={`group p-4 border ${darkMode ? 'border-white/20 hover:border-blue-400/50 bg-white/5 hover:bg-white/10' : 'border-gray-200 hover:border-blue-300 bg-white/50 hover:bg-white/80'} rounded-xl transition-all duration-300 text-left hover:shadow-lg hover:scale-105`}
+                        className={`group p-4 border border-gray-200 hover:border-blue-300 bg-white rounded-xl transition-all duration-200 text-left hover:shadow-sm`}
                       >
                         <div className="flex items-center gap-3 mb-3">
-                          <div className={`w-10 h-10 rounded-xl ${darkMode ? 'bg-white/10' : 'bg-gray-100'} flex items-center justify-center text-lg group-hover:scale-110 transition-transform`}>
+                          <div className={`w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-lg`}>
                             {categoryIcon}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -769,12 +763,12 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
               </div>
 
               {/* Advanced Shopping Cart */}
-              <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-2xl border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-xl overflow-hidden`}>
-                <div className={`p-6 border-b ${darkMode ? 'border-white/10' : 'border-gray-200'} bg-gradient-to-r ${darkMode ? 'from-primary-800/50 to-primary-700/50' : 'from-accent-50/50 to-primary-50/50'}`}>
+              <div className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden`}>
+                <div className={`p-6 border-b border-gray-200 bg-slate-50`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-2xl ${darkMode ? 'bg-indigo-500/30' : 'bg-indigo-100'} flex items-center justify-center`}>
-                        <i className={`bi bi-cart3 text-xl ${darkMode ? 'text-indigo-300' : 'text-indigo-600'}`}></i>
+                      <div className={`w-12 h-12 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center`}>
+                        <i className={`bi bi-cart3 text-xl text-indigo-600`}></i>
                       </div>
                       <div>
                         <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -835,12 +829,12 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                         return (
                           <div
                             key={item.medicine_id}
-                            className={`group p-4 border ${darkMode ? 'border-white/20 bg-white/5 hover:bg-white/10' : 'border-gray-200 bg-white/50 hover:bg-white/80'} rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02]`}
+                            className={`group p-4 border border-gray-100 bg-white hover:bg-slate-50 rounded-xl transition-colors hover:shadow-sm`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-3">
-                                  <div className={`w-12 h-12 rounded-xl ${darkMode ? 'bg-white/10' : 'bg-gray-100'} flex items-center justify-center text-xl group-hover:scale-110 transition-transform`}>
+                                  <div className={`w-12 h-12 rounded-lg bg-gray-50 flex items-center justify-center text-xl`}>
                                     {categoryIcon}
                                   </div>
                                   <div className="flex-1">
@@ -913,10 +907,10 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
             {/* Right Panel - Customer & Checkout */}
             <div className="space-y-6">
               {/* Advanced Customer Selection */}
-              <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-2xl p-6 border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-xl`}>
+              <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm`}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-12 h-12 rounded-2xl ${darkMode ? 'bg-blue-500/30' : 'bg-blue-100'} flex items-center justify-center`}>
-                    <i className={`bi bi-person-circle text-xl ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}></i>
+                  <div className={`w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100`}>
+                    <i className={`bi bi-person-circle text-xl text-blue-600`}></i>
                   </div>
                   <div>
                     <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Customer</h3>
@@ -925,12 +919,11 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                 </div>
 
                 {selectedCustomer ? (
-                  <div className={`p-6 rounded-2xl border-2 ${darkMode ? 'bg-gradient-to-br from-accent-500/20 to-primary-600/20 border-accent-400/30' : 'bg-gradient-to-br from-accent-50 to-primary-50 border-accent-200'} relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent-500/10 to-transparent opacity-50"></div>
+                  <div className={`p-6 rounded-xl border border-slate-200 bg-slate-50 relative overflow-hidden`}>
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-start gap-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-primary-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                          <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center text-blue-700 font-bold text-xl border border-blue-200">
                             {selectedCustomer.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -1011,7 +1004,7 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                             }}
                           >
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform">
+                              <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-blue-700 font-bold text-lg">
                                 {customer.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex-1">
@@ -1052,11 +1045,11 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                           setCustomerSearchQuery('');
                           setCustomerSearchResults([]);
                         }}
-                        className={`w-full p-4 rounded-xl border-2 border-dashed ${darkMode ? 'border-white/20 hover:border-blue-400/50 bg-white/5 hover:bg-white/10' : 'border-gray-300 hover:border-blue-300 bg-gray-50 hover:bg-blue-50'} transition-all duration-300 group`}
+                        className={`w-full p-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-blue-400 bg-slate-50 hover:bg-slate-100 transition-colors group`}
                       >
                         <div className="flex items-center justify-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl ${darkMode ? 'bg-white/10' : 'bg-gray-200'} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                            <i className={`bi bi-person-walking text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}></i>
+                          <div className={`w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center`}>
+                            <i className={`bi bi-person-walking text-lg text-gray-600`}></i>
                           </div>
                           <div>
                             <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Walk-in Customer</p>
@@ -1070,9 +1063,9 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
               </div>
 
               {/* Advanced Coupon Section */}
-              <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-2xl p-6 border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-xl`}>
+              <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm`}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-12 h-12 rounded-2xl ${darkMode ? 'bg-green-500/30' : 'bg-green-100'} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-lg bg-green-50 border border-green-100 flex items-center justify-center`}>
                     <i className={`bi bi-tag-fill text-xl ${darkMode ? 'text-green-300' : 'text-green-600'}`}></i>
                   </div>
                   <div>
@@ -1098,7 +1091,7 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                   </div>
                   <button
                     onClick={applyCoupon}
-                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                    className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
                   >
                     <i className="bi bi-check-circle"></i>
                     <span>Apply</span>
@@ -1124,9 +1117,9 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
               </div>
 
               {/* Advanced Sales Summary */}
-              <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-2xl p-6 border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-xl`}>
+              <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm`}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-12 h-12 rounded-2xl ${darkMode ? 'bg-indigo-500/30' : 'bg-indigo-100'} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center`}>
                     <i className={`bi bi-graph-up-arrow text-xl ${darkMode ? 'text-indigo-300' : 'text-indigo-600'}`}></i>
                   </div>
                   <div>
@@ -1136,18 +1129,18 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className={`p-4 rounded-2xl ${darkMode ? 'bg-gradient-to-br from-green-500/20 to-emerald-600/20 border border-green-400/30' : 'bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200'} text-center group hover:scale-105 transition-transform duration-300`}>
-                    <div className={`w-12 h-12 mx-auto mb-3 rounded-xl ${darkMode ? 'bg-green-500/30' : 'bg-green-100'} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <i className={`bi bi-cash-coin text-xl ${darkMode ? 'text-green-300' : 'text-green-600'}`}></i>
+                  <div className={`p-4 rounded-xl border border-slate-200 bg-slate-50 text-center transition-colors hover:bg-slate-100`}>
+                    <div className={`w-12 h-12 mx-auto mb-3 rounded-lg bg-green-50 border border-green-100 flex items-center justify-center`}>
+                      <i className={`bi bi-cash-coin text-xl text-green-600`}></i>
                     </div>
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'} mb-1`}>
+                    <p className={`text-2xl font-bold text-slate-800 mb-1`}>
                       UGX {Number(salesStats.todayTotal || 0).toLocaleString()}
                     </p>
-                    <p className={`text-sm font-medium ${darkMode ? 'text-green-300' : 'text-green-700'}`}>Total Sales</p>
+                    <p className={`text-sm font-medium text-slate-500`}>Total Sales</p>
                   </div>
-                  <div className={`p-4 rounded-2xl ${darkMode ? 'bg-gradient-to-br from-accent-500/20 to-primary-600/20 border border-accent-400/30' : 'bg-gradient-to-br from-accent-50 to-primary-50 border border-accent-200'} text-center group hover:scale-105 transition-transform duration-300`}>
-                    <div className={`w-12 h-12 mx-auto mb-3 rounded-xl ${darkMode ? 'bg-accent-500/30' : 'bg-accent-100'} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <i className={`bi bi-receipt text-xl ${darkMode ? 'text-accent-300' : 'text-accent-600'}`}></i>
+                  <div className={`p-4 rounded-xl border border-slate-200 bg-slate-50 text-center transition-colors hover:bg-slate-100`}>
+                    <div className={`w-12 h-12 mx-auto mb-3 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center`}>
+                      <i className={`bi bi-receipt text-xl text-blue-600`}></i>
                     </div>
                     <p className={`text-2xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'} mb-1`}>
                       {salesStats.todayCount || 0}
@@ -1170,9 +1163,9 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
               </div>
 
               {/* Advanced Order Summary */}
-              <div className={`backdrop-blur-xl ${darkMode ? 'bg-white/5' : 'bg-white/40'} rounded-2xl p-6 border ${darkMode ? 'border-white/10' : 'border-white/60'} shadow-xl`}>
+              <div className={`bg-white rounded-xl p-6 border border-slate-200 shadow-sm`}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-12 h-12 rounded-2xl ${darkMode ? 'bg-orange-500/30' : 'bg-orange-100'} flex items-center justify-center`}>
+                  <div className={`w-12 h-12 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center`}>
                     <i className={`bi bi-calculator text-xl ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}></i>
                   </div>
                   <div>
@@ -1205,13 +1198,13 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                     <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>UGX {Number(totals.tax_amount || 0).toLocaleString()}</span>
                   </div>
 
-                  <div className={`p-4 rounded-xl border-2 ${darkMode ? 'border-accent-400/30 bg-gradient-to-r from-accent-500/20 to-primary-600/20' : 'border-accent-200 bg-gradient-to-r from-accent-50 to-primary-50'}`}>
+                  <div className={`p-4 rounded-xl border-t-2 border-slate-800 bg-slate-50 mt-4`}>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <i className={`bi bi-cash-coin text-xl ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}></i>
-                        <span className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Total:</span>
+                        <i className={`bi bi-cash-coin text-xl text-slate-800`}></i>
+                        <span className={`text-xl font-bold text-slate-900`}>Total:</span>
                       </div>
-                      <span className={`text-3xl font-black ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>UGX {Number(totals.total_amount || 0).toLocaleString()}</span>
+                      <span className={`text-3xl font-black text-slate-900`}>UGX {Number(totals.total_amount || 0).toLocaleString()}</span>
                     </div>
                   </div>
 
@@ -1231,15 +1224,12 @@ export default function POSDashboard({ terminals, paymentMethods, customers: pro
                   <button
                     onClick={processCheckout}
                     disabled={cart.length === 0 || isProcessing}
-                    className={`group relative w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 overflow-hidden ${
+                    className={`group relative w-full py-4 rounded-xl font-bold text-lg transition-colors ${
                       cart.length === 0 || isProcessing
-                        ? darkMode 
-                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-accent-500 via-primary-500 to-primary-600 text-white shadow-2xl hover:shadow-3xl hover:scale-105 active:scale-95'
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        : 'bg-slate-800 text-white hover:bg-slate-700'
                     }`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative z-10 flex items-center justify-center gap-3">
                       {isProcessing ? (
                         <>

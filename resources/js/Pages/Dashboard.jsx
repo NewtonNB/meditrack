@@ -163,62 +163,52 @@ export default function Dashboard({ stats = {}, recentActivities = [], quickInsi
         <title>Dashboard - MediTrack</title>
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-primary-50 to-primary-100 relative">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary-300/10 to-accent-400/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-accent-300/10 to-primary-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-primary-300/8 to-neutral-400/8 rounded-full blur-3xl animate-pulse delay-500"></div>
-        </div>
-
-
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="min-h-screen bg-slate-50 relative">        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           {/* Welcome Header */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-accent-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-xl">
-                  <i className="bi bi-house-heart-fill text-3xl text-white"></i>
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                  <i className="bi bi-house-heart-fill text-2xl text-white"></i>
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-700 to-accent-600 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold text-slate-800">
                     Welcome Back!
                   </h1>
-                  <p className="text-lg text-slate-600 mt-2">
+                  <p className="text-sm text-slate-600 mt-1">
                     Here's what's happening at your pharmacy today
                   </p>
-                  <div className="flex items-center gap-4 mt-4">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium">All Systems Online</span>
+                  <div className="flex items-center gap-3 mt-3">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 text-green-700 rounded-md">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs font-semibold">All Systems Online</span>
                     </div>
-                    <div className="px-4 py-2 bg-slate-100 text-slate-600 rounded-full">
-                      <span className="text-sm font-mono-numbers">Updated: {lastUpdated.toLocaleTimeString()}</span>
+                    <div className="px-3 py-1 bg-slate-50 border border-slate-200 text-slate-600 rounded-md">
+                      <span className="text-xs font-mono">Updated: {lastUpdated.toLocaleTimeString()}</span>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={handleManualRefresh}
-                  className="p-3 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-xl transition-all duration-200 hover:scale-105"
+                  className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg transition-colors"
                   title="Refresh Dashboard"
                 >
-                  <i className="bi bi-arrow-clockwise text-xl"></i>
+                  <i className="bi bi-arrow-clockwise text-lg"></i>
                 </button>
                 
                 <button
                   onClick={() => setIsAutoRefresh(!isAutoRefresh)}
-                  className={`p-3 rounded-xl transition-all duration-200 hover:scale-105 ${
+                  className={`p-2.5 border rounded-lg transition-colors ${
                     isAutoRefresh 
-                      ? 'bg-green-100 hover:bg-green-200 text-green-600' 
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                      ? 'bg-green-50 border-green-200 hover:bg-green-100 text-green-700' 
+                      : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
                   }`}
                   title={isAutoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
                 >
-                  <i className={`bi ${isAutoRefresh ? 'bi-play-circle-fill' : 'bi-pause-circle-fill'} text-xl`}></i>
+                  <i className={`bi ${isAutoRefresh ? 'bi-play-circle-fill' : 'bi-pause-circle-fill'} text-lg`}></i>
                 </button>
               </div>
             </div>
@@ -279,69 +269,41 @@ export default function Dashboard({ stats = {}, recentActivities = [], quickInsi
               <a
                 key={card.title}
                 href={card.link}
-                className={`group relative bg-gradient-to-br ${card.bgGradient} rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 border border-white/50 backdrop-blur-sm cursor-pointer block active:scale-100 active:translate-y-0`}
+                className="block bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                 title={`Click to ${card.action}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-600 mb-2">{card.title}</p>
-                    <p className="text-3xl font-bold text-slate-900 mb-1 font-mono-numbers group-hover:scale-110 transition-transform duration-300">{card.value}</p>
-                    <p className="text-sm text-slate-500 flex items-center gap-1">
-                      <i className="bi bi-trending-up text-green-500 group-hover:animate-bounce"></i>
+                    <p className="text-sm font-medium text-slate-500 mb-1">{card.title}</p>
+                    <p className="text-2xl font-bold text-slate-800 mb-1 font-mono-numbers">{card.value}</p>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
                       <span className="font-mono-numbers">{card.subtitle}</span>
                     </p>
-                    <div className="mt-2 flex items-center gap-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-600 font-medium">Live</span>
-                    </div>
                   </div>
-                  <div className={`w-14 h-14 ${card.iconBg} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <i className={`${card.icon} text-2xl ${card.iconColor}`}></i>
+                  <div className={`w-12 h-12 ${card.iconBg} rounded-lg flex items-center justify-center`}>
+                    <i className={`${card.icon} text-xl ${card.iconColor}`}></i>
                   </div>
                 </div>
-                
-                {/* Mini Chart */}
-                <div className="mt-4">
-                  <svg viewBox="0 0 100 20" className="w-full h-4 opacity-60">
-                    <defs>
-                      <linearGradient id={`chart-${index}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.8" />
-                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.2" />
-                      </linearGradient>
-                    </defs>
-                    <polyline
-                      fill="none"
-                      stroke={`url(#chart-${index})`}
-                      strokeWidth="2"
-                      points="0,15 25,10 50,12 75,8 100,5"
-                      className="text-slate-400"
-                    />
-                  </svg>
-                </div>
-
-                {/* Hover Overlay with Action Button */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl flex items-center justify-center">
-                  <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    <span className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                      {card.action}
-                      <i className="bi bi-arrow-right"></i>
-                    </span>
-                  </div>
+                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                    {card.action}
+                    <i className="bi bi-arrow-right"></i>
+                  </span>
                 </div>
               </a>
             ))}
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/50">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-600 rounded-xl flex items-center justify-center">
-                  <i className="bi bi-lightning-charge-fill text-white text-lg"></i>
+                <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
+                  <i className="bi bi-lightning-charge-fill text-lg"></i>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">Quick Actions</h2>
-                  <p className="text-sm text-slate-600">Common pharmacy tasks</p>
+                  <h2 className="text-lg font-bold text-slate-800">Quick Actions</h2>
+                  <p className="text-sm text-slate-500">Common pharmacy tasks</p>
                 </div>
               </div>
             </div>
@@ -380,27 +342,17 @@ export default function Dashboard({ stats = {}, recentActivities = [], quickInsi
                 <a
                   key={action.label}
                   href={action.href}
-                  className={`group relative bg-gradient-to-r ${action.gradient} rounded-xl p-4 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 overflow-hidden active:scale-100 active:translate-y-0`}
+                  className="flex items-center gap-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-slate-300 hover:shadow-md transition-all group"
                 >
-                  <div className="relative z-10 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                      <i className={`${action.icon} text-xl`}></i>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">{action.label}</h3>
-                      <p className="text-sm text-white/80">{action.description}</p>
-                    </div>
+                  <div className="w-12 h-12 bg-slate-50 text-blue-600 rounded-lg flex items-center justify-center border border-slate-100 group-hover:bg-blue-50 transition-colors">
+                    <i className={`${action.icon} text-xl`}></i>
                   </div>
-                  
-                  {/* Hover Effect with Shimmer */}
-                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-sm text-slate-800">{action.label}</h3>
+                    <p className="text-xs text-slate-500">{action.description}</p>
                   </div>
-                  
-                  {/* Arrow Icon with Bounce */}
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 group-hover:animate-bounce">
-                    <i className="bi bi-arrow-right text-xl"></i>
+                  <div className="text-slate-400 group-hover:text-blue-600 transition-colors">
+                    <i className="bi bi-arrow-right"></i>
                   </div>
                 </a>
               ))}
@@ -422,14 +374,14 @@ export default function Dashboard({ stats = {}, recentActivities = [], quickInsi
             </div>
 
             {/* Quick Insights */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/50">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col h-full">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-primary-600 rounded-xl flex items-center justify-center">
-                  <i className="bi bi-lightbulb-fill text-white text-lg"></i>
+                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
+                  <i className="bi bi-lightbulb-fill text-lg"></i>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Smart Insights</h3>
-                  <p className="text-sm text-slate-600">AI-powered recommendations</p>
+                  <h3 className="text-lg font-bold text-slate-800">Smart Insights</h3>
+                  <p className="text-sm text-slate-500">System recommendations</p>
                 </div>
               </div>
 

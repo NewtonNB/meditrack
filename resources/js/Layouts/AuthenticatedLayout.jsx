@@ -122,18 +122,13 @@ export default function AuthenticatedLayout({ header, children }) {
         </div>
         {/* Mobile menu */}
         <div className={`fixed inset-0 flex z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-          <div className="fixed inset-0">
-            <div
-              className="absolute inset-0 mobile-menu-backdrop"
-              onClick={() => setSidebarOpen(false)}
-            ></div>
-          </div>
-          <div className="relative flex-1 flex flex-col max-w-xs w-full soft-mobile-menu shadow-2xl">
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onClick={() => setSidebarOpen(false)}></div>
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-slate-900 shadow-xl border-r border-slate-800">
             {/* Close Button */}
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 type="button"
-                className="ml-1 flex items-center justify-center h-14 w-14 soft-close-button hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/50 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full hover:bg-white/10 focus:outline-none"
                 onClick={() => setSidebarOpen(false)}
               >
                 <XMarkIcon className="h-6 w-6 text-white" />
@@ -141,47 +136,38 @@ export default function AuthenticatedLayout({ header, children }) {
             </div>
 
             {/* Mobile Logo Section */}
-            <div className="flex-shrink-0 flex items-center px-6 mb-8 pt-6">
-              <Link href={getSafeRoute('dashboard')} className="flex items-center group logo-enhanced">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <div className="w-14 h-14 ultra-rounded-logo flex items-center justify-center shadow-2xl group-hover:shadow-blue-500/25 transition-all duration-300 pulse-glow">
-                      <span className="text-white font-bold text-xl">M</span>
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 soft-status"></div>
-                  </div>
-                  <div>
-                    <h1 className="text-white font-bold text-xl tracking-tight">MediTrack</h1>
-                    <p className="text-slate-300 text-sm font-medium">Pharmacy Management</p>
-                  </div>
+            <div className="flex-shrink-0 flex items-center px-6 mb-4 pt-6 border-b border-slate-800">
+              <Link href={getSafeRoute('dashboard')} className="flex items-center space-x-3 pb-6">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                  <span className="text-white font-bold text-xl">M</span>
+                </div>
+                <div>
+                  <h1 className="text-white font-bold text-lg tracking-tight">MediTrack</h1>
+                  <p className="text-slate-400 text-xs font-medium mt-0.5">Pharmacy Management</p>
                 </div>
               </Link>
             </div>
 
             {/* Mobile Navigation */}
-            <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 h-0 pt-2 pb-4 overflow-y-auto">
               <RoleBasedNavigation onItemClick={handleNavigation} />
             </div>
 
             {/* Mobile User Section */}
-            <div className="flex-shrink-0 soft-user-section p-6">
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0 relative">
-                  <div className="h-14 w-14 soft-avatar flex items-center justify-center shadow-xl">
-                    <span className="text-white text-lg font-bold">
-                      {user.name ? user.name.substring(0, 1).toUpperCase() : 'U'}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 soft-status border-2 border-slate-700"></div>
+            <div className="flex-shrink-0 bg-slate-950 p-4 border-t border-slate-800">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow">
+                  <span className="text-white font-medium text-sm">
+                    {user.name ? user.name.substring(0, 1).toUpperCase() : 'U'}
+                  </span>
                 </div>
-                <div className="flex-1">
-                  <p className="text-base font-bold text-white">{String(user.name || 'User')}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{String(user.name || 'User')}</p>
                   <Link
                     href={getSafeRoute('profile.edit')}
-                    className="text-sm font-medium text-slate-300 hover:text-slate-200 transition-colors duration-200 flex items-center mt-1 rounded-xl px-2 py-1 hover:bg-white/10"
+                    className="text-xs font-medium text-slate-400 hover:text-blue-400 transition-colors flex items-center mt-1"
                     onClick={handleNavigation}
                   >
-                    <i className="bi bi-person mr-2"></i>
                     View profile
                   </Link>
                 </div>
@@ -192,77 +178,36 @@ export default function AuthenticatedLayout({ header, children }) {
 
         {/* Static sidebar for desktop */}
         <div className="hidden md:fixed md:inset-y-0 md:flex md:w-64 z-30">
-          <div className="flex flex-col w-64 ultra-soft-sidebar sidebar-glow relative overflow-hidden">
-            {/* Animated background elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-500/10 rounded-full blur-xl soft-floating-orb"></div>
-              <div className="absolute bottom-20 right-8 w-24 h-24 bg-gradient-to-br from-purple-400/10 to-pink-500/10 rounded-full blur-xl soft-floating-orb"></div>
-              <div className="absolute top-1/2 left-4 w-16 h-16 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full blur-xl soft-floating-orb"></div>
-              <div className="absolute top-1/4 right-6 w-20 h-20 bg-gradient-to-br from-indigo-400/8 to-blue-500/8 rounded-full blur-xl soft-floating-orb"></div>
-              <div className="absolute bottom-1/3 left-8 w-14 h-14 bg-gradient-to-br from-pink-400/8 to-purple-500/8 rounded-full blur-xl soft-floating-orb"></div>
-            </div>
-
-            {/* Decorative Lines */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-              <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-              <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
-            </div>
-
+          <div className="flex flex-col w-64 bg-slate-900 shadow-xl border-r border-slate-800">
             {/* Logo Section */}
-            <div className="flex items-center flex-shrink-0 px-6 pt-8 pb-6 relative z-10">
-              <Link href={getSafeRoute('dashboard')} className="flex items-center group w-full logo-enhanced">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 ultra-rounded-logo flex items-center justify-center shadow-2xl group-hover:shadow-blue-500/25 group-hover:scale-105 transition-all duration-500 pulse-glow">
-                      <span className="text-white font-bold text-2xl tracking-tight">M</span>
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 soft-status"></div>
-                  </div>
-                  <div className="flex-1">
-                    <h1 className="text-white font-bold text-2xl group-hover:text-blue-200 transition-colors duration-300 gradient-text tracking-tight leading-tight">
-                      MediTrack
-                    </h1>
-                    <p className="text-slate-300 text-sm font-medium tracking-wide">
-                      Pharmacy Management
-                    </p>
-                    <div className="flex items-center mt-1 space-x-1">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-300 font-medium">Online</span>
-                    </div>
-                  </div>
+            <div className="flex items-center flex-shrink-0 px-6 pt-6 pb-6 border-b border-slate-800">
+              <Link href={getSafeRoute('dashboard')} className="flex items-center space-x-3 w-full">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                  <span className="text-white font-bold text-xl">M</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-white font-bold text-xl tracking-tight truncate">MediTrack</h1>
+                  <p className="text-slate-400 text-xs font-medium mt-0.5 truncate">Pharmacy Management</p>
                 </div>
               </Link>
             </div>
 
             {/* Navigation Section */}
-            <div className="flex-1 overflow-y-auto px-3 pb-4 custom-scrollbar relative z-10">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               <RoleBasedNavigation />
             </div>
 
             {/* User Section */}
-            <div className="flex-shrink-0 soft-user-section p-6 relative z-10">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <div className="w-14 h-14 soft-avatar flex items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <span className="text-white text-lg font-bold">
-                      {user.name ? user.name.substring(0, 1).toUpperCase() : 'U'}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 soft-status border-2 border-slate-700"></div>
+            <div className="flex-shrink-0 bg-slate-950 p-4 border-t border-slate-800">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow">
+                  <span className="text-white font-medium text-sm">
+                    {user.name ? user.name.substring(0, 1).toUpperCase() : 'U'}
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-bold text-white truncate tracking-wide">{String(user.name || 'User')}</p>
-                  <p className="text-sm text-slate-300 truncate capitalize font-medium">{String(user?.role || 'User')}</p>
-                  <div className="flex items-center mt-1 space-x-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-green-300 font-medium">Active Now</span>
-                  </div>
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
-                  <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                  <p className="text-sm font-medium text-white truncate">{String(user.name || 'User')}</p>
+                  <p className="text-xs text-slate-400 truncate capitalize">{String(user?.role || 'User')}</p>
                 </div>
               </div>
             </div>

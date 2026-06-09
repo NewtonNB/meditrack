@@ -220,12 +220,12 @@ const EnhancedActivityTracker = ({
   // Error fallback
   if (hasError) {
     return (
-      <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 p-8">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="bi bi-exclamation-triangle text-2xl text-red-600"></i>
           </div>
-          <h3 className="text-lg font-bold text-slate-900 mb-2">Activity Tracker Error</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Activity Tracker Error</h3>
           <p className="text-slate-600 mb-4">Unable to load activity data. Please refresh the page.</p>
           <button
             onClick={() => window.location.reload()}
@@ -239,19 +239,19 @@ const EnhancedActivityTracker = ({
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200">
       {/* Header */}
-      <div className="p-6 border-b border-slate-200/50">
+      <div className="p-6 border-b border-slate-100">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-              <i className="bi bi-activity text-white text-lg"></i>
+            <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
+              <i className="bi bi-activity text-lg"></i>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Activity Tracker</h3>
+              <h3 className="text-lg font-bold text-slate-800">Activity Tracker</h3>
               <div className="flex items-center gap-3 mt-1">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span className="text-sm text-green-600 font-medium">Live Tracking</span>
                 </div>
                 <span className="text-xs text-slate-500 font-mono-numbers">
@@ -336,22 +336,14 @@ const EnhancedActivityTracker = ({
               return (
                 <div
                   key={activity.id || index}
-                  className={`group relative bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-slate-200/60 hover:border-slate-300/60 hover:shadow-lg transition-all duration-300 ${
-                    activity.route ? 'cursor-pointer hover:scale-[1.01]' : ''
+                  className={`group bg-white rounded-xl p-4 border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-shadow ${
+                    activity.route ? 'cursor-pointer' : ''
                   }`}
                   onClick={() => handleActivityClick(activity)}
                 >
-                  {/* Priority Indicator */}
-                  {activity.priority === 'critical' && (
-                    <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  )}
-                  {activity.priority === 'high' && (
-                    <div className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full"></div>
-                  )}
-
                   <div className="flex items-start gap-4">
                     {/* Enhanced Icon */}
-                    <div className={`relative w-12 h-12 rounded-xl ${style.bgColor} ${style.textColor} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 border ${style.borderColor} shadow-sm`}>
+                    <div className={`relative w-12 h-12 rounded-lg ${style.bgColor} ${style.textColor} flex items-center justify-center flex-shrink-0 border ${style.borderColor}`}>
                       <i className={`${style.icon} text-lg`}></i>
                       {/* Activity type indicator */}
                       <div className={`absolute -bottom-1 -right-1 w-4 h-4 ${style.bgColor} rounded-full border-2 border-white flex items-center justify-center`}>
@@ -424,8 +416,6 @@ const EnhancedActivityTracker = ({
                     </div>
                   </div>
 
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-accent-500/5 to-primary-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
                 </div>
               );
             })}

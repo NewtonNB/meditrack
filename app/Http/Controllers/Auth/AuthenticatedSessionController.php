@@ -14,7 +14,7 @@ use Inertia\Response;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Display the login view (web only).
      */
     public function create(): Response
     {
@@ -26,25 +26,52 @@ class AuthenticatedSessionController extends Controller
 
     /**
      * Handle an incoming authentication request.
+     * Returns JSON for API requests, redirect for web.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request)
     {
         $request->authenticate();
 
+        // API request: return token
+        if ($request->is('api/*') || $request->expectsJson()) {
+            $user = $request->user();
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Login successful.',
+                'token'   => $token,
+                'user'    => [
+                    'id'          => $user->id,
+                    'name'        => $user->name,
+                    'email'       => $user->email,
+                    'role'        => $user->role,
+                    'pharmacy_id' => $user->pharmacy_id,
+                    'avatar'      => $user->avatar,
+                ],
+            ]);
+        }
+
+        // Web request: session-based
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**
-     * Destroy an authenticated session.
+     * Destroy an authenticated session / revoke token.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request)
     {
+        // API request: revoke current token
+        if ($request->is('api/*') || $request->expectsJson()) {
+            $request->user()->currentAccessToken()->delete();
+
+            return response()->json(['message' => 'Logged out successfully.']);
+        }
+
+        // Web request: invalidate session
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');

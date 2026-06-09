@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\AutomationService;
@@ -31,88 +32,79 @@ class DashboardController extends Controller
     }
 
     /**
-     * Display the main dashboard
+     * Display the main dashboard.
+     * Returns JSON for API requests, Inertia for web.
      */
-    public function index(): Response
+    public function index(Request $request)
     {
         try {
-            // Get basic statistics
-            $stats = $this->getBasicStats();
-            
-            // Get automation insights
+            $stats             = $this->getBasicStats();
             $automationSummary = $this->automationService->getDashboardSummary();
-            
-            // Get recent activities using the local method
-            $recentActivities = $this->getRecentActivities();
-            
-            // Debug logging
-            \Log::info('Dashboard Recent Activities Debug', [
-                'count' => count($recentActivities),
-                'type' => gettype($recentActivities),
-                'first_activity' => $recentActivities[0] ?? 'No activities',
-                'sample_data' => array_slice($recentActivities, 0, 2)
-            ]);
-            
-            // Get quick insights
-            $quickInsights = $this->getQuickInsights();
+            $recentActivities  = $this->getRecentActivities();
+            $quickInsights     = $this->getQuickInsights();
 
-            return Inertia::render('Dashboard', [
-                'stats' => $stats,
+            $data = [
+                'stats'             => $stats,
                 'automationSummary' => $automationSummary,
-                'recentActivities' => $recentActivities,
-                'quickInsights' => $quickInsights,
-            ]);
+                'recentActivities'  => $recentActivities,
+                'quickInsights'     => $quickInsights,
+            ];
+
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json($data);
+            }
+
+            return Inertia::render('Dashboard', $data);
+
         } catch (\Exception $e) {
-            // Log the error for debugging
             \Log::error('Dashboard error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
-                'user' => auth()->id(),
+                'user'  => auth()->id(),
             ]);
-            
-            // Return a basic dashboard with error message
-            return Inertia::render('Dashboard', [
-                'stats' => [
+
+            $fallback = [
+                'stats'             => [
                     'medicines' => ['total' => 0, 'low_stock' => 0, 'expiring_soon' => 0],
-                    'sales' => ['today' => 0, 'today_revenue' => 0, 'this_month' => 0, 'this_month_revenue' => 0],
+                    'sales'     => ['today' => 0, 'today_revenue' => 0, 'this_month' => 0, 'this_month_revenue' => 0],
                     'customers' => ['total' => 0, 'new_this_month' => 0],
                     'suppliers' => ['total' => 0, 'active' => 0],
                 ],
                 'automationSummary' => [],
-                'recentActivities' => [],
-                'quickInsights' => [[
-                    'type' => 'danger',
-                    'title' => 'Dashboard Error',
-                    'message' => 'There was an issue loading dashboard data. Please refresh the page.',
-                    'icon' => 'exclamation-triangle',
+                'recentActivities'  => [],
+                'quickInsights'     => [[
+                    'type'    => 'danger',
+                    'title'   => 'Dashboard Error',
+                    'message' => 'There was an issue loading dashboard data. Please refresh.',
+                    'icon'    => 'exclamation-triangle',
                 ]],
-                'error' => 'Dashboard data could not be loaded. Please try refreshing the page.',
-            ]);
+                'error' => 'Dashboard data could not be loaded.',
+            ];
+
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json($fallback, 500);
+            }
+
+            return Inertia::render('Dashboard', $fallback);
         }
     }
 
     /**
-     * Display the enhanced analytics dashboard
+     * Enhanced analytics dashboard.
      */
-    public function enhanced(): Response
+    public function enhanced(Request $request)
     {
-        // Get comprehensive analytics data
-        $analyticsData = $this->analyticsService->getDashboardAnalytics();
-        
-        // Get automation insights
-        $automationSummary = $this->automationService->getDashboardSummary();
-        
-        // Get performance metrics
-        $performanceMetrics = $this->getPerformanceMetrics();
-        
-        // Get trend analysis
-        $trendAnalysis = $this->getTrendAnalysis();
+        $data = [
+            'analytics'   => $this->analyticsService->getDashboardAnalytics(),
+            'automation'  => $this->automationService->getDashboardSummary(),
+            'performance' => $this->getPerformanceMetrics(),
+            'trends'      => $this->getTrendAnalysis(),
+        ];
 
-        return Inertia::render('Dashboard/Enhanced', [
-            'analytics' => $analyticsData,
-            'automation' => $automationSummary,
-            'performance' => $performanceMetrics,
-            'trends' => $trendAnalysis,
-        ]);
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Dashboard/Enhanced', $data);
     }
 
     /**

@@ -194,42 +194,31 @@ export default function Customers() {
       </Head>
 
       <div 
-        className={`min-h-screen transition-all duration-500 ${
-          darkMode 
-            ? 'bg-gradient-to-br from-primary-900 via-primary-800 to-accent-900' 
-            : 'bg-gradient-to-br from-accent-50 via-primary-50 to-neutral-50'
-        }`}
+        className="min-h-screen bg-slate-50 transition-all duration-500"
         style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
       >
-        {/* Floating Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className={`absolute top-1/4 left-1/4 w-64 h-64 ${darkMode ? 'bg-blue-500/10' : 'bg-blue-200/30'} rounded-full blur-3xl animate-pulse`}></div>
-          <div className={`absolute top-3/4 right-1/4 w-96 h-96 ${darkMode ? 'bg-indigo-500/10' : 'bg-indigo-200/30'} rounded-full blur-3xl animate-pulse delay-1000`}></div>
-          <div className={`absolute top-1/2 left-1/2 w-80 h-80 ${darkMode ? 'bg-purple-500/10' : 'bg-purple-200/30'} rounded-full blur-3xl animate-pulse delay-500`}></div>
-        </div>
-
         <div className="relative z-10 p-4 sm:p-6">
         {/* Modern Header */}
-        <div className={`backdrop-blur-xl ${darkMode ? 'bg-gray-800/30' : 'bg-white/30'} rounded-2xl p-6 mb-8 border ${darkMode ? 'border-gray-700/50' : 'border-white/50'} shadow-xl`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-gradient-to-br from-accent-400 to-primary-500' : 'bg-gradient-to-br from-accent-400 to-primary-500'} flex items-center justify-center shadow-lg`}>
-                <i className="bi bi-people-fill text-2xl text-white"></i>
+        <div className="bg-white rounded-lg p-6 mb-8 border border-slate-200 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <i className="bi bi-people-fill text-xl text-blue-600"></i>
               </div>
               <div>
-                <h1 className={`text-4xl font-black ${darkMode ? 'bg-gradient-to-r from-accent-400 to-primary-400 bg-clip-text text-transparent' : 'bg-gradient-to-r from-accent-600 to-primary-600 bg-clip-text text-transparent'}`}>
+                <h1 className="text-2xl font-bold text-slate-800">
                   Customer Management
                 </h1>
-                <p className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-2`}>
+                <p className="text-sm text-slate-500 mt-1">
                   Manage customer records, track relationships, and maintain contact information
                 </p>
-                <div className="flex items-center gap-4 mt-3">
-                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${darkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'}`}>
-                    <i className="bi bi-check-circle-fill"></i>
-                    <span className="text-sm font-medium">Database Active</span>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-green-50 text-green-700 border border-green-200">
+                    <i className="bi bi-check-circle-fill text-xs"></i>
+                    <span className="text-xs font-medium">Database Active</span>
                   </div>
-                  <div className={`px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700/50 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                    <span className="text-sm">Total: {stats.total} customers</span>
+                  <div className="px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                    <span className="text-xs font-medium">Total: {stats.total} customers</span>
                   </div>
                 </div>
               </div>
@@ -237,6 +226,7 @@ export default function Customers() {
             
             <div className="flex items-center gap-4">
               {/* Search */}
+              {/* Setup simple standard buttons and inputs */}
               <div className="relative">
                 <input
                   type="search"
@@ -246,31 +236,23 @@ export default function Customers() {
                     setQuery(e.target.value);
                     setPage(1);
                   }}
-                  className={`w-64 pr-10 pl-3 py-2 rounded-xl border ${darkMode ? 'bg-gray-800/50 border-gray-600/50 text-gray-200 placeholder-gray-400' : 'bg-white/50 border-gray-200/50 text-gray-800'} shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200`}
+                  className="w-full md:w-64 pr-10 pl-4 py-2 rounded-md border border-slate-300 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <i className={`bi bi-search absolute right-3 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
+                <i className="bi bi-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
               </div>
 
-              {/* Dark Mode Toggle */}
+              {/* Dark Mode Toggle - Hidden or stylized smaller since system prefers standard light */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-3 rounded-xl transition-all duration-300 ${
-                  darkMode 
-                    ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className="hidden"
               >
-                <i className={`bi ${darkMode ? 'bi-sun-fill' : 'bi-moon-fill'} text-xl`}></i>
+                Toggle Dark Mode
               </button>
               
               {/* Export Button */}
               <button
                 onClick={() => exportCSV(filtered)}
-                className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                  darkMode 
-                    ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30' 
-                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                }`}
+                className="px-4 py-2 rounded-md bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors text-sm font-medium flex items-center"
               >
                 <i className="bi bi-download mr-2"></i>Export CSV
               </button>
@@ -281,11 +263,7 @@ export default function Customers() {
                   createForm.reset();
                   setIsCreateOpen(true);
                 }}
-                className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                  darkMode 
-                    ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' 
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
+                className="px-4 py-2 rounded-md bg-blue-600 border border-transparent text-white hover:bg-blue-700 transition-colors text-sm font-medium flex items-center shadow-sm"
               >
                 <i className="bi bi-person-plus mr-2"></i>Add Customer
               </button>
@@ -294,71 +272,57 @@ export default function Customers() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Total Customers */}
-          <div className={`backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-accent-500/20 to-accent-600/20 border-accent-400/30' : 'bg-gradient-to-br from-accent-50 to-accent-100 border-accent-200'} rounded-2xl p-6 border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>Total Customers</p>
-                <p className={`text-3xl font-bold mt-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{stats.total}</p>
-                <p className={`text-xs mt-1 ${darkMode ? 'text-blue-200' : 'text-blue-500'}`}>Registered</p>
-              </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-blue-500/30' : 'bg-blue-500'} flex items-center justify-center shadow-lg`}>
-                <i className="bi bi-people text-2xl text-white"></i>
-              </div>
+          <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500">Total Customers</p>
+              <p className="text-2xl font-bold text-slate-800 mt-1">{stats.total}</p>
+              <p className="text-xs text-slate-400 mt-0.5">Registered</p>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+              <i className="bi bi-people text-xl text-blue-600"></i>
             </div>
           </div>
 
           {/* Active This Month */}
-          <div className={`backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-400/30' : 'bg-gradient-to-br from-green-50 to-green-100 border-green-200'} rounded-2xl p-6 border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-green-300' : 'text-green-600'}`}>Active This Month</p>
-                <p className={`text-3xl font-bold mt-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {stats.newThisMonth}
-                </p>
-                <p className={`text-xs mt-1 ${darkMode ? 'text-green-200' : 'text-green-500'}`}>New customers</p>
-              </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-green-500/30' : 'bg-green-500'} flex items-center justify-center shadow-lg`}>
-                <i className="bi bi-person-check text-2xl text-white"></i>
-              </div>
+          <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500">Active This Month</p>
+              <p className="text-2xl font-bold text-slate-800 mt-1">{stats.newThisMonth}</p>
+              <p className="text-xs text-slate-400 mt-0.5">New customers</p>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center border border-green-100">
+              <i className="bi bi-person-check text-xl text-green-600"></i>
             </div>
           </div>
 
           {/* With Email */}
-          <div className={`backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-primary-500/20 to-primary-600/20 border-primary-400/30' : 'bg-gradient-to-br from-primary-50 to-primary-100 border-primary-200'} rounded-2xl p-6 border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>With Email</p>
-                <p className={`text-3xl font-bold mt-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {stats.withEmail}
-                </p>
-                <p className={`text-xs mt-1 ${darkMode ? 'text-purple-200' : 'text-purple-500'}`}>Email contacts</p>
-              </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-purple-500/30' : 'bg-purple-500'} flex items-center justify-center shadow-lg`}>
-                <i className="bi bi-envelope text-2xl text-white"></i>
-              </div>
+          <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500">With Email</p>
+              <p className="text-2xl font-bold text-slate-800 mt-1">{stats.withEmail}</p>
+              <p className="text-xs text-slate-400 mt-0.5">Email contacts</p>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center border border-purple-100">
+              <i className="bi bi-envelope text-xl text-purple-600"></i>
             </div>
           </div>
 
           {/* With Phone */}
-          <div className={`backdrop-blur-xl ${darkMode ? 'bg-gradient-to-br from-orange-500/20 to-orange-600/20 border-orange-400/30' : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200'} rounded-2xl p-6 border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm font-medium ${darkMode ? 'text-orange-300' : 'text-orange-600'}`}>With Phone</p>
-                <p className={`text-3xl font-bold mt-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {stats.withPhone}
-                </p>
-                <p className={`text-xs mt-1 ${darkMode ? 'text-orange-200' : 'text-orange-500'}`}>Phone contacts</p>
-              </div>
-              <div className={`w-16 h-16 rounded-2xl ${darkMode ? 'bg-orange-500/30' : 'bg-orange-500'} flex items-center justify-center shadow-lg`}>
-                <i className="bi bi-telephone text-2xl text-white"></i>
-              </div>
+          <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-500">With Phone</p>
+              <p className="text-2xl font-bold text-slate-800 mt-1">{stats.withPhone}</p>
+              <p className="text-xs text-slate-400 mt-0.5">Phone contacts</p>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center border border-orange-100">
+              <i className="bi bi-telephone text-xl text-orange-600"></i>
             </div>
           </div>
         </div>
 
-        <div className={`backdrop-blur-xl ${darkMode ? 'bg-gray-800/30' : 'bg-white/30'} rounded-2xl border ${darkMode ? 'border-gray-700/50' : 'border-white/50'} shadow-xl overflow-hidden`}>
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden p-6 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm text-gray-600">
               Showing{' '}
@@ -388,8 +352,8 @@ export default function Customers() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className={`${darkMode ? 'bg-gray-800/50' : 'bg-gray-50/80'} sticky top-0 backdrop-blur-sm`}>
+            <table className="min-w-full divide-y divide-slate-200 mt-4">
+              <thead className="bg-slate-50 sticky top-0">
                 <tr>
                   <th className={`px-6 py-4 text-left text-xs font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'} uppercase`}>
                     <div className="flex items-center gap-2">
@@ -423,13 +387,13 @@ export default function Customers() {
                   </th>
                 </tr>
               </thead>
-              <tbody className={`${darkMode ? 'bg-gray-800/50' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700/50' : 'divide-gray-100'}`}>
+              <tbody className="bg-white divide-y divide-slate-200">
                 {!isLoaded ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span className="ml-2">Loading customers...</span>
+                        <span className="ml-2 font-medium">Loading customers...</span>
                       </div>
                     </td>
                   </tr>
@@ -451,18 +415,18 @@ export default function Customers() {
                   const hasPhone = cust.phone && cust.phone.trim();
                   
                   return (
-                  <tr key={cust.id} className={`${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-blue-50/50'} transition-all duration-200`}>
+                  <tr key={cust.id} className="hover:bg-slate-50 transition-colors">
                     {/* Customer Name with Avatar */}
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full ${darkMode ? 'bg-blue-500/20' : 'bg-blue-100'} flex items-center justify-center flex-shrink-0`}>
-                          <span className={`text-sm font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{initials}</span>
+                        <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 flex-shrink-0">
+                          <span className="text-xs font-bold text-blue-600">{initials}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                          <div className="text-sm font-semibold text-slate-800 truncate">
                             {cust.name}
                           </div>
-                          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-0.5`}>
+                          <div className="text-xs text-slate-500 mt-0.5">
                             ID: #{cust.id}
                           </div>
                         </div>
@@ -470,26 +434,26 @@ export default function Customers() {
                     </td>
 
                     {/* Phone */}
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {hasPhone ? (
-                        <div className="flex items-center gap-2">
-                          <i className={`bi bi-telephone-fill text-sm ${darkMode ? 'text-green-400' : 'text-green-600'}`}></i>
-                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} font-medium`}>{cust.phone}</span>
+                        <div className="flex items-center gap-2 text-slate-700 text-sm">
+                          <i className="bi bi-telephone text-slate-400"></i>
+                          <span>{cust.phone}</span>
                         </div>
                       ) : (
-                        <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>No phone</span>
+                        <span className="text-sm text-slate-400">No phone</span>
                       )}
                     </td>
 
                     {/* Email */}
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {hasEmail ? (
-                        <div className="flex items-center gap-2">
-                          <i className={`bi bi-envelope-fill text-sm ${darkMode ? 'text-purple-400' : 'text-purple-600'}`}></i>
-                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{cust.email}</span>
+                        <div className="flex items-center gap-2 text-slate-700 text-sm">
+                          <i className="bi bi-envelope text-slate-400"></i>
+                          <span>{cust.email}</span>
                         </div>
                       ) : (
-                        <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>No email</span>
+                        <span className="text-sm text-slate-400">No email</span>
                       )}
                     </td>
 
@@ -506,11 +470,7 @@ export default function Customers() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openView(cust)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                            darkMode 
-                              ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-400/30' 
-                              : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200'
-                          }`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
                           title="View details"
                         >
                           <i className="bi bi-eye"></i>
@@ -518,11 +478,7 @@ export default function Customers() {
                         </button>
                         <button
                           onClick={() => openEdit(cust)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                            darkMode 
-                              ? 'bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-400/30' 
-                              : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
-                          }`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
                           title="Edit customer"
                         >
                           <i className="bi bi-pencil"></i>
@@ -530,11 +486,7 @@ export default function Customers() {
                         </button>
                         <button
                           onClick={() => openDelete(cust.id, cust)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                            darkMode 
-                              ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-400/30' 
-                              : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
-                          }`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded hover:bg-red-50 text-red-600 border border-red-200 transition-colors"
                           title="Delete customer"
                         >
                           <i className="bi bi-trash"></i>
@@ -709,74 +661,53 @@ export default function Customers() {
 
         {/* Enhanced Edit Customer Modal */}
         <Modal show={isEditOpen} onClose={() => setIsEditOpen(false)} maxWidth="3xl">
-          <div className="relative bg-white overflow-hidden">
-            {/* Decorative Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-accent-50 via-primary-50 to-neutral-50 opacity-50"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-accent-200 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-            
+          <div className="relative bg-white overflow-hidden rounded-xl">
             {/* Modal Header */}
-            <div className="relative px-6 py-5 bg-gradient-to-r from-accent-600 via-primary-600 to-primary-700 border-b-4 border-accent-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl border-2 border-white/30">
-                      <i className="bi bi-person-gear text-3xl text-white"></i>
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white flex items-center justify-center animate-pulse">
-                      <i className="bi bi-pencil-fill text-xs text-white"></i>
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-black text-white drop-shadow-lg">Edit Customer</h2>
-                    <p className="text-sm text-blue-50 mt-1 font-medium flex items-center gap-2">
-                      <i className="bi bi-info-circle"></i>
-                      Update customer information and details
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center text-white transition-all duration-200 hover:scale-110 hover:rotate-90 border border-white/20"
-                  onClick={() => setIsEditOpen(false)}
-                  aria-label="Close"
-                >
-                  <i className="bi bi-x-lg text-2xl"></i>
-                </button>
+            <div className="relative px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Edit Customer</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Update customer information and details
+                </p>
               </div>
+              <button
+                type="button"
+                className="w-8 h-8 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
+                onClick={() => setIsEditOpen(false)}
+                aria-label="Close"
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
 
             {selectedItem && (
               <form onSubmit={handleEdit} noValidate className="relative p-6 space-y-6 max-h-[calc(100vh-250px)] overflow-y-auto">
                 {/* Personal Information Section */}
-                <div className="relative bg-gradient-to-br from-accent-50 to-primary-50 rounded-2xl p-6 shadow-lg border-2 border-accent-200 hover:border-accent-300 transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500 to-primary-600 flex items-center justify-center shadow-lg">
-                      <i className="bi bi-person-circle text-white text-xl"></i>
+                <div className="bg-slate-50 rounded-lg p-5 border border-slate-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                      <i className="bi bi-person text-blue-600 text-lg"></i>
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Personal Information</h4>
-                      <p className="text-xs text-gray-600">Basic customer details</p>
+                      <h4 className="text-sm font-bold text-gray-900">Personal Information</h4>
+                      <p className="text-xs text-gray-500">Basic customer details</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="edit_name" className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                        <i className="bi bi-asterisk text-red-500 text-xs"></i>
-                        Full Name
+                      <label htmlFor="edit_name" className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                        Full Name <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
                           id="edit_name"
                           type="text"
-                          className="block w-full pl-12 pr-4 py-3 border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 text-gray-900 font-medium"
+                          className="block w-full px-3 py-2 border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm text-slate-900"
                           value={editForm.data.name}
                           onChange={e => editForm.setData('name', e.target.value)}
                           placeholder="Enter customer's full name"
                           required
                         />
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                          <i className="bi bi-person text-gray-400"></i>
-                        </div>
                       </div>
                       {editForm.errors.name && (
                         <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -786,26 +717,21 @@ export default function Customers() {
                       )}
                     </div>
                     <div>
-                      <label htmlFor="edit_phone" className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                        <i className="bi bi-telephone text-blue-500"></i>
+                      <label htmlFor="edit_phone" className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                         Phone Number
                       </label>
                       <div className="relative">
                         <input
                           id="edit_phone"
                           type="tel"
-                          className="block w-full pl-12 pr-4 py-3 border-2 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl transition-all duration-200 text-gray-900 font-medium"
+                          className="block w-full px-3 py-2 border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm text-slate-900"
                           value={editForm.data.phone}
                           onChange={e => editForm.setData('phone', e.target.value)}
                           placeholder="0700123456"
                         />
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                          <i className="bi bi-telephone text-gray-400"></i>
-                        </div>
                       </div>
                       {editForm.errors.phone && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                          <i className="bi bi-exclamation-circle-fill"></i>
+                        <p className="mt-1 text-xs text-red-600">
                           {editForm.errors.phone}
                         </p>
                       )}
@@ -814,59 +740,50 @@ export default function Customers() {
                 </div>
 
                 {/* Contact Information Section */}
-                <div className="relative bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 shadow-lg border-2 border-green-200 hover:border-green-300 transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                      <i className="bi bi-envelope-at text-white text-xl"></i>
+                <div className="bg-slate-50 rounded-lg p-5 border border-slate-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                      <i className="bi bi-envelope text-blue-600 text-lg"></i>
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Contact Information</h4>
-                      <p className="text-xs text-gray-600">Email and address details</p>
+                      <h4 className="text-sm font-bold text-gray-900">Contact Information</h4>
+                      <p className="text-xs text-gray-500">Email and address details</p>
                     </div>
                   </div>
-                  <div className="space-y-5">
+                  <div className="space-y-4">
                     <div>
-                      <label htmlFor="edit_email" className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                        <i className="bi bi-envelope text-green-500"></i>
+                      <label htmlFor="edit_email" className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                         Email Address
                       </label>
                       <div className="relative">
                         <input
                           id="edit_email"
                           type="email"
-                          className="block w-full pl-12 pr-4 py-3 border-2 border-gray-300 focus:border-green-500 focus:ring-4 focus:ring-green-100 rounded-xl transition-all duration-200 text-gray-900 font-medium"
+                          className="block w-full px-3 py-2 border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm text-slate-900"
                           value={editForm.data.email}
                           onChange={e => editForm.setData('email', e.target.value)}
                           placeholder="customer@example.com"
                         />
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                          <i className="bi bi-envelope text-gray-400"></i>
-                        </div>
                       </div>
                       {editForm.errors.email && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                          <i className="bi bi-exclamation-circle-fill"></i>
+                        <p className="mt-1 text-xs text-red-600">
                           {editForm.errors.email}
                         </p>
                       )}
                     </div>
                     <div>
-                      <label htmlFor="edit_address" className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                        <i className="bi bi-geo-alt text-green-500"></i>
+                      <label htmlFor="edit_address" className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                         Address
                       </label>
                       <div className="relative">
                         <textarea
                           id="edit_address"
                           rows="3"
-                          className="block w-full pl-12 pr-4 py-3 border-2 border-gray-300 focus:border-green-500 focus:ring-4 focus:ring-green-100 rounded-xl transition-all duration-200 text-gray-900 resize-none"
+                          className="block w-full px-3 py-2 border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md text-sm text-slate-900 resize-none"
                           value={editForm.data.address}
                           onChange={e => editForm.setData('address', e.target.value)}
                           placeholder="Enter customer's address..."
                         />
-                        <div className="absolute top-3 left-0 flex items-center pl-4 pointer-events-none">
-                          <i className="bi bi-geo-alt text-gray-400"></i>
-                        </div>
                       </div>
                       {editForm.errors.address && (
                         <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
@@ -879,31 +796,20 @@ export default function Customers() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-4 pt-6 border-t-2 border-gray-200">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
                   <button
                     type="button"
                     onClick={() => setIsEditOpen(false)}
-                    className="px-6 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all duration-200 hover:scale-105 flex items-center gap-2"
+                    className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-md hover:bg-slate-50 transition-colors"
                   >
-                    <i className="bi bi-x-circle"></i>
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={editForm.processing}
-                    className="px-8 py-3 bg-gradient-to-r from-accent-500 to-primary-600 text-white font-bold rounded-xl hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-4 py-2 bg-blue-600 border border-transparent text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {editForm.processing ? (
-                      <>
-                        <i className="bi bi-arrow-clockwise animate-spin"></i>
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-check-circle-fill"></i>
-                        Update Customer
-                      </>
-                    )}
+                    {editForm.processing ? 'Updating...' : 'Update Customer'}
                   </button>
                 </div>
               </form>

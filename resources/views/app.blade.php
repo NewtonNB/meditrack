@@ -13,6 +13,7 @@
     
     @routes
     @inertiaHead
+    @viteReactRefresh
     @vite(['resources/js/app.jsx'])
 </head>
 <body class="antialiased font-inter">

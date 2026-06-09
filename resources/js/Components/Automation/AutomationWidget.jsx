@@ -136,27 +136,29 @@ export default function AutomationWidget() {
     <div className="space-y-6">
       {/* Quick Actions */}
       {quick_actions && quick_actions.length > 0 && (
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center text-red-600">
-              <AlertTriangle className="w-5 h-5 mr-2" />
+        <Card className="border border-red-200 shadow-sm">
+          <CardHeader className="pb-3 border-b border-red-100 bg-red-50/50">
+            <CardTitle className="flex items-center text-red-700 text-base">
+              <AlertTriangle className="w-5 h-5 mr-2 text-red-600" />
               Urgent Actions Required
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {quick_actions.slice(0, 3).map((action, index) => (
+          <CardContent className="space-y-3 pt-4">
+             {quick_actions.slice(0, 3).map((action, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-red-50 rounded-lg"
+                className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg"
               >
                 <div className="flex-1">
-                  <p className="font-medium text-red-800">{String(action.title || 'Action Required')}</p>
-                  <Badge variant="destructive" size="sm" className="mt-1">
-                    {String(action.priority || 'high').toUpperCase()}
-                  </Badge>
+                  <p className="font-medium text-slate-800">{String(action.title || 'Action Required')}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-red-100 text-red-700">
+                      {String(action.priority || 'high')}
+                    </span>
+                  </div>
                 </div>
                 <Link href={window.route ? route(action.route) : `/${action.route.replace('.', '/')}`}>
-                  <Button size="sm" variant="outline" className="text-red-600 border-red-200">
+                  <Button size="sm" variant="outline" className="text-slate-600 border-slate-200 hover:bg-slate-50">
                     {String(action.action || 'View')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -168,56 +170,56 @@ export default function AutomationWidget() {
       )}
 
       {/* Main Automation Widget */}
-      <Card>
-        <CardHeader>
+      <Card className="border border-slate-200 shadow-sm">
+        <CardHeader className="pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-slate-800 text-lg">
               <Zap className="w-5 h-5 mr-2 text-blue-600" />
               Smart Automation
             </CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button onClick={fetchAutomationData} variant="ghost" size="sm">
+            <div className="flex items-center space-x-3">
+              <Button onClick={fetchAutomationData} variant="outline" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 border-slate-200 bg-white">
                 <RefreshCw className="w-4 h-4" />
               </Button>
               {lastUpdated && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-slate-500">
                   Updated {lastUpdated.toLocaleTimeString()}
                 </span>
               )}
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {/* Reorder Suggestions Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-5 border border-slate-200 rounded-xl bg-slate-50/50">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
                 <div className="flex items-center">
-                  <Package className="w-5 h-5 text-blue-600 mr-2" />
-                  <h4 className="font-medium text-blue-800">Reorder Suggestions</h4>
+                  <Package className="w-5 h-5 text-slate-500 mr-2" />
+                  <h4 className="font-medium text-slate-800">Reorder Suggestions</h4>
                 </div>
-                <Badge variant="secondary">{Number(reorder_suggestions.total || 0)}</Badge>
+                <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-xs font-bold">{Number(reorder_suggestions.total || 0)}</span>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-red-600">Critical:</span>
-                  <span className="font-medium">{Number(reorder_suggestions.critical || 0)}</span>
+              <div className="space-y-3 mb-4">
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-slate-500 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div> Critical:</span>
+                  <span className="font-semibold text-slate-700">{Number(reorder_suggestions.critical || 0)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-orange-600">High Priority:</span>
-                  <span className="font-medium">{Number(reorder_suggestions.high || 0)}</span>
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-slate-500 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500"></div> High Priority:</span>
+                  <span className="font-semibold text-slate-700">{Number(reorder_suggestions.high || 0)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Est. Cost:</span>
-                  <span className="font-medium">
+                <div className="flex justify-between text-sm items-center pt-2 border-t border-slate-100">
+                  <span className="text-slate-500">Est. Cost:</span>
+                  <span className="font-bold text-slate-800">
                     UGX {Number(reorder_suggestions.estimated_cost || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
 
-              <Link href={window.route ? route('automation.reorder-suggestions') : '/automation/reorder-suggestions'} className="mt-3 block">
-                <Button size="sm" className="w-full">
+              <Link href={window.route ? route('automation.reorder-suggestions') : '/automation/reorder-suggestions'} className="mt-auto block">
+                <Button size="sm" variant="outline" className="w-full bg-white text-slate-600 border-slate-200 hover:bg-slate-50">
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   View All Suggestions
                 </Button>
@@ -225,34 +227,34 @@ export default function AutomationWidget() {
             </div>
 
             {/* Expiry Reminders Summary */}
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
+            <div className="p-5 border border-slate-200 rounded-xl bg-slate-50/50">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
                 <div className="flex items-center">
-                  <Clock className="w-5 h-5 text-orange-600 mr-2" />
-                  <h4 className="font-medium text-orange-800">Expiry Alerts</h4>
+                  <Clock className="w-5 h-5 text-slate-500 mr-2" />
+                  <h4 className="font-medium text-slate-800">Expiry Alerts</h4>
                 </div>
-                <Badge variant="secondary">{Number(expiry_reminders.total || 0)}</Badge>
+                <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-xs font-bold">{Number(expiry_reminders.total || 0)}</span>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-red-600">Critical (≤7 days):</span>
-                  <span className="font-medium">{Number(expiry_reminders.critical || 0)}</span>
+              <div className="space-y-3 mb-4">
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-slate-500 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div> Critical (≤7 days):</span>
+                  <span className="font-semibold text-slate-700">{Number(expiry_reminders.critical || 0)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-orange-600">High (≤30 days):</span>
-                  <span className="font-medium">{Number(expiry_reminders.high || 0)}</span>
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-slate-500 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500"></div> High (≤30 days):</span>
+                  <span className="font-semibold text-slate-700">{Number(expiry_reminders.high || 0)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Potential Loss:</span>
-                  <span className="font-medium">
+                <div className="flex justify-between text-sm items-center pt-2 border-t border-slate-100">
+                  <span className="text-slate-500">Potential Loss:</span>
+                  <span className="font-bold text-slate-800">
                     UGX {Number(expiry_reminders.potential_loss || 0).toLocaleString()}
                   </span>
                 </div>
               </div>
 
-              <Link href={window.route ? route('medicines.index') : '/medicines'} className="mt-3 block">
-                <Button size="sm" variant="outline" className="w-full">
+              <Link href={window.route ? route('medicines.index') : '/medicines'} className="mt-auto block">
+                <Button size="sm" variant="outline" className="w-full bg-white text-slate-600 border-slate-200 hover:bg-slate-50">
                   <Calendar className="w-4 h-4 mr-2" />
                   View All Alerts
                 </Button>
