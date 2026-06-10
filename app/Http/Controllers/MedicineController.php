@@ -21,33 +21,39 @@ class MedicineController extends Controller
         $this->permissionService = $permissionService;
         $this->auditService = $auditService;
     }
-    public function index(): Response
+    public function index(Request $request)
     {
         $user = auth()->user();
-        
-        // Build query based on user role
-        $query = Medicine::with(['sales', 'supplier', 'creator', 'updater']);
-        
-        // Cashiers see limited information
+        $query = Medicine::with(['supplier']);
+
         if ($user->isCashier()) {
-            $query->select(['id', 'name', 'brand', 'selling_price', 'stock', 'supplier_id']);
+            $query->select(['id', 'name', 'brand', 'selling_price', 'stock', 'supplier_id', 'expiry_date', 'category', 'reorder_level', 'created_at']);
         }
-        
-        $medicines = $query->latest()->paginate(10);
-        
-        // Filter sensitive data for cashiers
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(fn($q) => $q->where('name', 'like', "%$s%")
+                ->orWhere('brand', 'like', "%$s%")
+                ->orWhere('generic_name', 'like', "%$s%"));
+        }
+
+        $medicines = $query->latest()->paginate($request->get('per_page', 15));
+
         if ($user->isCashier()) {
-            $medicines->getCollection()->transform(function ($medicine) {
-                $medicine->makeHidden(['cost_price']);
-                return $medicine;
-            });
+            $medicines->getCollection()->transform(fn($m) => $m->makeHidden(['cost_price']));
         }
-        
-        return Inertia::render('Medicines/Enhanced', [
-            'medicines' => $medicines,
-            'canManage' => $user->hasPermissionTo('manage_medicines'),
+
+        $data = [
+            'medicines'    => $medicines,
+            'canManage'    => $user->hasPermissionTo('manage_medicines'),
             'canViewCosts' => !$user->isCashier(),
-        ]);
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Medicines/Enhanced', $data);
     }
 
     public function create(): Response
@@ -63,49 +69,46 @@ class MedicineController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        // Check permission
         if (!auth()->user()->hasPermissionTo('manage_medicines')) {
-            abort(403, 'Insufficient permissions to create medicines.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403)
+                : abort(403);
         }
-        
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'brand' => ['nullable', 'string', 'max:255'],
-            'batch_number' => ['nullable', 'string', 'max:255'],
-            'expiry_date' => ['nullable', 'date'],
-            'cost_price' => ['required', 'numeric', 'min:0'],
+            'name'          => ['required', 'string', 'max:255'],
+            'brand'         => ['nullable', 'string', 'max:255'],
+            'batch_number'  => ['nullable', 'string', 'max:255'],
+            'expiry_date'   => ['nullable', 'date'],
+            'cost_price'    => ['required', 'numeric', 'min:0'],
             'selling_price' => ['required', 'numeric', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
-            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'stock'         => ['required', 'integer', 'min:0'],
+            'supplier_id'   => ['nullable', 'exists:suppliers,id'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $medicine = Medicine::create($validated);
-        
-        // Log the creation activity (handled by Auditable trait)
-        $this->auditService->logCustomActivity(
-            'medicine_created',
-            "Created medicine '{$medicine->name}' with stock level {$medicine->stock}",
-            [
-                'medicine_id' => $medicine->id,
-                'initial_stock' => $medicine->stock,
-                'cost_price' => $medicine->cost_price,
-                'selling_price' => $medicine->selling_price,
-            ]
-        );
+
+        $this->auditService->logCustomActivity('medicine_created', "Created medicine '{$medicine->name}'", [
+            'medicine_id' => $medicine->id, 'initial_stock' => $medicine->stock,
+        ]);
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Medicine created.', 'medicine' => $medicine], 201);
+        }
 
         return redirect()->route('medicines.index')->with('success', 'Medicine created successfully.');
     }
 
-    public function update(Request $request, Medicine $medicine): RedirectResponse
+    public function update(Request $request, Medicine $medicine)
     {
-        // Check permission
         if (!auth()->user()->hasPermissionTo('manage_medicines')) {
-            abort(403, 'Insufficient permissions to update medicines.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
-        
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'brand' => ['nullable', 'string', 'max:255'],
@@ -118,99 +121,53 @@ class MedicineController extends Controller
             'reorder_level' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $oldStock = $medicine->stock;
         $medicine->update($validated);
-        
-        // Log stock changes specifically
-        if ($oldStock != $validated['stock']) {
-            $this->auditService->logCustomActivity(
-                'stock_adjusted',
-                "Stock adjusted for '{$medicine->name}' from {$oldStock} to {$validated['stock']}",
-                [
-                    'medicine_id' => $medicine->id,
-                    'old_stock' => $oldStock,
-                    'new_stock' => $validated['stock'],
-                    'adjustment' => $validated['stock'] - $oldStock,
-                ]
-            );
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Medicine updated.', 'medicine' => $medicine->fresh()]);
         }
 
         return back()->with('success', 'Medicine updated.');
     }
 
-    public function destroy(Medicine $medicine): RedirectResponse
+    public function destroy(Request $request, Medicine $medicine)
     {
-        // Check permission
         if (!auth()->user()->hasPermissionTo('manage_medicines')) {
-            abort(403, 'Insufficient permissions to delete medicines.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
-        
-        // Log deletion before actually deleting
-        $this->auditService->logCustomActivity(
-            'medicine_deleted',
-            "Deleted medicine '{$medicine->name}' (Stock: {$medicine->stock})",
-            [
-                'medicine_id' => $medicine->id,
-                'medicine_name' => $medicine->name,
-                'final_stock' => $medicine->stock,
-                'cost_price' => $medicine->cost_price,
-            ]
-        );
-        
+
         $medicine->delete();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Medicine deleted.']);
+        }
+
         return back()->with('success', 'Medicine deleted.');
     }
 
-    /**
-     * Show medicine activity history.
-     */
-    public function history(Medicine $medicine): Response
+    public function history(Request $request, Medicine $medicine)
     {
-        // Check permission
-        if (!auth()->user()->hasAnyPermission(['manage_medicines', 'view_audit_logs'])) {
-            abort(403, 'Insufficient permissions to view medicine history.');
-        }
-        
         $activities = $this->auditService->getModelHistory($medicine, 50);
-        
-        return Inertia::render('MedicineHistory', [
-            'medicine' => $medicine->load(['supplier', 'creator', 'updater']),
-            'activities' => $activities,
-        ]);
+        $data = ['medicine' => $medicine->load(['supplier']), 'activities' => $activities];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('MedicineHistory', $data);
     }
 
-    /**
-     * Bulk delete medicines.
-     */
-    public function bulkDelete(Request $request): RedirectResponse
+    public function bulkDelete(Request $request)
     {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:medicines,id'
-        ]);
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'exists:medicines,id']);
 
-        $user = auth()->user();
-        
-        // Get medicines to delete
-        $medicines = Medicine::whereIn('id', $request->ids)->get();
-        
-        // Check permissions for each medicine
-        foreach ($medicines as $medicine) {
-            if (!$user->hasPermissionTo('manage_medicines')) {
-                return back()->withErrors(['error' => 'Unauthorized to delete medicines']);
-            }
-        }
-        
-        // Delete medicines
         $count = Medicine::whereIn('id', $request->ids)->delete();
-        
-        // Log the activity
-        $this->auditService->logCustomActivity(
-            'medicines_bulk_deleted',
-            "Bulk deleted {$count} medicines",
-            ['medicine_ids' => $request->ids]
-        );
-        
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => "{$count} medicine(s) deleted."]);
+        }
+
         return back()->with('success', "{$count} medicine(s) deleted successfully");
     }
 

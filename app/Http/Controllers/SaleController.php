@@ -24,43 +24,38 @@ class SaleController extends Controller
         $this->permissionService = $permissionService;
         $this->auditService = $auditService;
     }
-    public function index(): Response
+    public function index(Request $request)
     {
         $user = auth()->user();
-        
-        // Build query with user attribution and proper customer loading
         $query = Sale::with(['medicine', 'customer:id,name,phone,email', 'creator:id,name']);
-        
-        // Cashiers can only see their own sales unless they're viewing all
+
         if ($user->isCashier() && !$user->hasPermissionTo('view_reports')) {
             $query->where('created_by', $user->id);
         }
-        
-        $sales = $query->latest()->paginate(10);
-        
-        // Get medicines with appropriate data based on user role (same as create method)
-        $medicinesQuery = Medicine::orderBy('name');
-        
-        // Cashiers don't see cost prices
-        if ($user->isCashier()) {
-            $medicinesQuery->select(['id', 'name', 'brand', 'selling_price', 'stock']);
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(fn($q) => $q->whereHas('medicine', fn($m) => $m->where('name', 'like', "%$s%"))
+                ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%$s%")));
         }
-        
-        $medicines = $medicinesQuery->get();
-        
-        // Get customers for current pharmacy only
-        $customers = Customer::where('pharmacy_id', auth()->user()->pharmacy_id ?? 1)
-            ->orderBy('name')
-            ->get();
-        
-        return Inertia::render('Sales', [
-            'sales' => $sales,
-            'medicines' => $medicines,
-            'customers' => $customers,
-            'canViewAll' => $user->hasPermissionTo('view_reports'),
-            'canManage' => $user->hasAnyPermission(['manage_medicines', 'view_reports']),
-            'canViewCosts' => !$user->isCashier(),
-        ]);
+
+        $sales = $query->latest()->paginate($request->get('per_page', 15));
+
+        $data = [
+            'sales'       => $sales,
+            'canViewAll'  => $user->hasPermissionTo('view_reports'),
+            'canManage'   => $user->hasAnyPermission(['manage_medicines', 'view_reports']),
+            'canViewCosts'=> !$user->isCashier(),
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        $data['medicines'] = \App\Models\Medicine::orderBy('name')->get();
+        $data['customers'] = \App\Models\Customer::where('pharmacy_id', $user->pharmacy_id ?? 1)->orderBy('name')->get();
+
+        return Inertia::render('Sales', $data);
     }
 
     public function create(): Response
@@ -89,7 +84,7 @@ class SaleController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         // Optimize validation - remove expensive exists checks for better performance
         $validated = $request->validate([
@@ -139,207 +134,114 @@ class SaleController extends Controller
         
         $user = auth()->user();
 
-        return DB::transaction(function () use ($validated, $medicine, $customer, $user) {
-            $unitPrice = (float) $validated['unit_price'];
-            $total = $unitPrice * (int) $validated['quantity'];
+            return DB::transaction(function () use ($validated, $medicine, $customer, $user, $request) {
+                $unitPrice     = (float) $validated['unit_price'];
+                $total         = $unitPrice * (int) $validated['quantity'];
+                $invoiceNumber = 'INV-' . now()->format('Ymd') . '-' . str_pad(Sale::whereDate('created_at', now()->toDateString())->count() + 1, 4, '0', STR_PAD_LEFT);
 
-            // Generate invoice number
-            $invoiceNumber = 'INV-' . now()->format('Ymd') . '-' . str_pad((Sale::whereDate('created_at', now()->toDateString())->count() + 1), 4, '0', STR_PAD_LEFT);
-            
-            // Create sale record
-            $sale = Sale::create([
-                'medicine_id' => $medicine->id,
-                'customer_id' => $customer ? $customer->id : null,
-                'customer' => $customer ? $customer->name : ($validated['customer'] ?? null),
-                'customer_phone' => $customer ? $customer->phone : ($validated['customer_phone'] ?? null),
-                'quantity' => $validated['quantity'],
-                'unit_price' => $unitPrice,
-                'total_price' => $total,
-                'payment_method' => $validated['payment_method'],
-                'notes' => $validated['notes'] ?? null,
-                'invoice' => $invoiceNumber,
-                'date' => now()->toDateString(),
-                'sold_at' => now(),
-                'created_by' => auth()->id(),
-            ]);
-
-            // Update stock
-            $medicine->decrement('stock', (int) $validated['quantity']);
-
-            // Create stock movement (simplified for performance)
-            try {
-                StockMovement::create([
-                    'medicine_id' => $medicine->id,
-                    'warehouse_id' => 1,
-                    'pharmacy_id' => auth()->user()->pharmacy_id ?? 1,
-                    'movement_type' => 'out',
-                    'quantity' => -1 * (int) $validated['quantity'],
-                    'reference' => 'SALE-' . $sale->id,
-                    'reference_type' => 'sale',
-                    'notes' => 'Sale: ' . $medicine->name . ($customer ? ' to ' . $customer->name : ' (walk-in)'),
-                    'created_by' => auth()->id(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                $sale = Sale::create([
+                    'medicine_id'    => $medicine->id,
+                    'customer_id'    => $customer?->id,
+                    'customer'       => $customer?->name ?? ($validated['customer'] ?? null),
+                    'customer_phone' => $customer?->phone ?? ($validated['customer_phone'] ?? null),
+                    'quantity'       => $validated['quantity'],
+                    'unit_price'     => $unitPrice,
+                    'total_price'    => $total,
+                    'payment_method' => $validated['payment_method'],
+                    'notes'          => $validated['notes'] ?? null,
+                    'invoice'        => $invoiceNumber,
+                    'date'           => now()->toDateString(),
+                    'sold_at'        => now(),
+                    'created_by'     => auth()->id(),
                 ]);
-            } catch (\Exception $e) {
-                \Log::error('Stock movement creation failed: ' . $e->getMessage());
-                // Continue - don't fail the sale for stock movement issues
-            }
 
-            // Log the sale transaction (async for better performance)
-            try {
-                $this->auditService->logCustomActivity(
-                    'sale_processed',
-                    "Sale: {$validated['quantity']} units of {$medicine->name}" . 
-                    ($customer ? " to {$customer->name}" : ""),
-                    [
-                        'sale_id' => $sale->id,
-                        'medicine_id' => $medicine->id,
-                        'quantity' => $validated['quantity'],
-                        'total_amount' => $total,
-                    ]
-                );
-            } catch (\Exception $e) {
-                \Log::error('Audit logging failed: ' . $e->getMessage());
-                // Continue - don't fail the sale for audit issues
-            }
+                $medicine->decrement('stock', (int) $validated['quantity']);
 
-            return redirect()->route('sales.index')->with('success', 'Sale recorded successfully.');
-        });
-    }
-
-    public function destroy(Sale $sale): RedirectResponse
-    {
-        $user = auth()->user();
-        
-        // Only pharmacy admins and super admins can delete sales
-        if (!in_array($user->role, ['pharmacy_admin', 'super_admin'])) {
-            return redirect()->back()->withErrors(['error' => 'Unauthorized to delete sales.']);
-        }
-        
-        return DB::transaction(function () use ($sale, $user) {
-            // Get medicine for stock restoration
-            $medicine = $sale->medicine;
-            
-            if ($medicine) {
-                // Restore stock
-                $medicine->increment('stock', $sale->quantity);
-                
-                // Create reverse stock movement
                 try {
                     StockMovement::create([
-                        'medicine_id' => $medicine->id,
-                        'warehouse_id' => 1,
-                        'pharmacy_id' => $user->pharmacy_id ?? 1,
-                        'movement_type' => 'in',
-                        'quantity' => $sale->quantity,
-                        'reference' => 'DELETE-SALE-' . $sale->id,
-                        'reference_type' => 'sale_deletion',
-                        'notes' => 'Stock restored from deleted sale: ' . $medicine->name,
-                        'created_by' => auth()->id(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'medicine_id'    => $medicine->id,
+                        'warehouse_id'   => 1,
+                        'pharmacy_id'    => auth()->user()->pharmacy_id ?? 1,
+                        'movement_type'  => 'out',
+                        'quantity'       => -1 * (int) $validated['quantity'],
+                        'reference'      => 'SALE-' . $sale->id,
+                        'reference_type' => 'sale',
+                        'notes'          => 'Sale: ' . $medicine->name,
+                        'created_by'     => auth()->id(),
                     ]);
                 } catch (\Exception $e) {
-                    \Log::error('Stock movement creation failed during sale deletion: ' . $e->getMessage());
+                    \Log::error('Stock movement failed: ' . $e->getMessage());
                 }
-            }
-            
-            // Log the deletion
-            try {
-                $this->auditService->logCustomActivity(
-                    'sale_deleted',
-                    "Deleted sale: {$sale->quantity} units of {$medicine->name}",
-                    [
-                        'sale_id' => $sale->id,
-                        'medicine_id' => $sale->medicine_id,
-                        'quantity' => $sale->quantity,
-                        'total_amount' => $sale->total_price,
-                        'invoice' => $sale->invoice,
-                    ]
-                );
-            } catch (\Exception $e) {
-                \Log::error('Audit logging failed during sale deletion: ' . $e->getMessage());
-            }
-            
-            // Delete the sale
-            $sale->delete();
-            
-            return redirect()->route('sales.index')->with('success', 'Sale deleted successfully and stock restored.');
-        });
+
+                if ($request->is('api/*') || $request->expectsJson()) {
+                    return response()->json(['message' => 'Sale recorded.', 'sale' => $sale->load('medicine', 'customer')], 201);
+                }
+
+                return redirect()->route('sales.index')->with('success', 'Sale recorded successfully.');
+            });
     }
 
-    public function refund(Request $request, Sale $sale): RedirectResponse
+    public function destroy(Request $request, Sale $sale)
     {
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'max:500'],
-            'refund_amount' => ['required', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
-
         $user = auth()->user();
-        
-        // Check if refund amount is valid
-        if ($validated['refund_amount'] > $sale->total_price) {
-            return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot exceed sale total.']);
+        if (!in_array($user->role, ['pharmacy_admin', 'super_admin'])) {
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403)
+                : redirect()->back()->withErrors(['error' => 'Unauthorized.']);
         }
 
-        return DB::transaction(function () use ($sale, $validated, $user) {
-            // Update sale with refund information
+        DB::transaction(function () use ($sale, $user) {
+            $medicine = $sale->medicine;
+            if ($medicine) {
+                $medicine->increment('stock', $sale->quantity);
+                try {
+                    StockMovement::create(['medicine_id' => $medicine->id, 'warehouse_id' => 1, 'pharmacy_id' => $user->pharmacy_id ?? 1, 'movement_type' => 'in', 'quantity' => $sale->quantity, 'reference' => 'DELETE-SALE-' . $sale->id, 'reference_type' => 'sale_deletion', 'notes' => 'Stock restored', 'created_by' => auth()->id()]);
+                } catch (\Exception $e) { \Log::error($e->getMessage()); }
+            }
+            $sale->delete();
+        });
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Sale deleted.']);
+        }
+
+        return redirect()->route('sales.index')->with('success', 'Sale deleted successfully.');
+    }
+
+    public function refund(Request $request, Sale $sale)
+    {
+        $validated = $request->validate([
+            'reason'        => ['required', 'string', 'max:500'],
+            'refund_amount' => ['required', 'numeric', 'min:0'],
+            'notes'         => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if ($validated['refund_amount'] > $sale->total_price) {
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Refund amount exceeds sale total.'], 422)
+                : redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot exceed sale total.']);
+        }
+
+        DB::transaction(function () use ($sale, $validated) {
             $sale->update([
                 'refund_amount' => $validated['refund_amount'],
                 'refund_reason' => $validated['reason'],
-                'refund_notes' => $validated['notes'] ?? null,
-                'refunded_at' => now(),
-                'refunded_by' => auth()->id(),
-                'status' => $validated['refund_amount'] >= $sale->total_price ? 'refunded' : 'partially_refunded',
+                'refund_notes'  => $validated['notes'] ?? null,
+                'refunded_at'   => now(),
+                'refunded_by'   => auth()->id(),
+                'status'        => $validated['refund_amount'] >= $sale->total_price ? 'refunded' : 'partially_refunded',
             ]);
 
-            // If full refund, restore stock
-            if ($validated['refund_amount'] >= $sale->total_price) {
-                $medicine = $sale->medicine;
-                if ($medicine) {
-                    $medicine->increment('stock', $sale->quantity);
-                    
-                    // Create stock movement for refund
-                    try {
-                        StockMovement::create([
-                            'medicine_id' => $medicine->id,
-                            'warehouse_id' => 1,
-                            'pharmacy_id' => $user->pharmacy_id ?? 1,
-                            'movement_type' => 'in',
-                            'quantity' => $sale->quantity,
-                            'reference' => 'REFUND-' . $sale->id,
-                            'reference_type' => 'refund',
-                            'notes' => 'Stock restored from refunded sale: ' . $medicine->name,
-                            'created_by' => auth()->id(),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    } catch (\Exception $e) {
-                        \Log::error('Stock movement creation failed during refund: ' . $e->getMessage());
-                    }
-                }
+            if ($validated['refund_amount'] >= $sale->total_price && $sale->medicine) {
+                $sale->medicine->increment('stock', $sale->quantity);
             }
-
-            // Log the refund
-            try {
-                $this->auditService->logCustomActivity(
-                    'sale_refunded',
-                    "Refunded sale: UGX {$validated['refund_amount']} for {$sale->quantity} units",
-                    [
-                        'sale_id' => $sale->id,
-                        'refund_amount' => $validated['refund_amount'],
-                        'refund_reason' => $validated['reason'],
-                        'invoice' => $sale->invoice,
-                    ]
-                );
-            } catch (\Exception $e) {
-                \Log::error('Audit logging failed during refund: ' . $e->getMessage());
-            }
-
-            return redirect()->route('sales.index')->with('success', 'Refund processed successfully.');
         });
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Refund processed.', 'sale' => $sale->fresh()]);
+        }
+
+        return redirect()->route('sales.index')->with('success', 'Refund processed successfully.');
     }
 
     /**
@@ -547,75 +449,63 @@ class SaleController extends Controller
         }
     }
 
-    /**
-     * Show sale details and history.
-     */
-    public function show(Sale $sale): Response
+    public function show(Request $request, Sale $sale)
     {
         $user = auth()->user();
-        
-        // Check if user can view this sale
         if ($user->isCashier() && !$user->hasPermissionTo('view_reports') && $sale->created_by !== $user->id) {
-            abort(403, 'You can only view your own sales.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
-        
+
         $sale->load(['medicine', 'customer', 'creator']);
-        
-        return Inertia::render('SaleDetails', [
-            'sale' => $sale,
-            'canViewCosts' => !$user->isCashier(),
-        ]);
+        $data = ['sale' => $sale, 'canViewCosts' => !$user->isCashier()];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('SaleDetails', $data);
     }
 
-    /**
-     * Get sales report data.
-     */
-    public function report(Request $request): Response
+    public function report(Request $request)
     {
         $user = auth()->user();
-        
-        // Check permission for reports
         if (!$user->hasPermissionTo('view_reports')) {
-            abort(403, 'Insufficient permissions to view sales reports.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
-        
+
         $validated = $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date'],
-            'user_id' => ['nullable', 'exists:users,id'],
+            'end_date'   => ['nullable', 'date'],
+            'user_id'    => ['nullable', 'exists:users,id'],
         ]);
-        
+
         $query = Sale::with(['medicine', 'customer', 'creator']);
-        
-        if ($validated['start_date'] ?? null) {
-            $query->whereDate('sold_at', '>=', $validated['start_date']);
-        }
-        
-        if ($validated['end_date'] ?? null) {
-            $query->whereDate('sold_at', '<=', $validated['end_date']);
-        }
-        
-        if ($validated['user_id'] ?? null) {
-            $query->where('created_by', $validated['user_id']);
-        }
-        
-        $sales = $query->latest()->paginate(25);
-        
-        // Calculate summary statistics
-        $totalSales = $query->sum('total_price');
-        $totalQuantity = $query->sum('quantity');
-        $salesCount = $query->count();
-        
-        return Inertia::render('SalesReport', [
-            'sales' => $sales,
+        if ($validated['start_date'] ?? null) $query->whereDate('sold_at', '>=', $validated['start_date']);
+        if ($validated['end_date']   ?? null) $query->whereDate('sold_at', '<=', $validated['end_date']);
+        if ($validated['user_id']    ?? null) $query->where('created_by', $validated['user_id']);
+
+        $sales      = $query->latest()->paginate(25);
+        $totalSales = Sale::sum('total_price');
+        $salesCount = Sale::count();
+
+        $data = [
+            'sales'   => $sales,
             'summary' => [
-                'total_amount' => $totalSales,
-                'total_quantity' => $totalQuantity,
-                'sales_count' => $salesCount,
-                'average_sale' => $salesCount > 0 ? $totalSales / $salesCount : 0,
+                'total_amount'   => $totalSales,
+                'total_quantity' => Sale::sum('quantity'),
+                'sales_count'    => $salesCount,
+                'average_sale'   => $salesCount > 0 ? $totalSales / $salesCount : 0,
             ],
             'filters' => $validated,
-        ]);
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('SalesReport', $data);
     }
 }
 

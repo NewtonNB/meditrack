@@ -12,16 +12,19 @@ use Carbon\Carbon;
 
 class SystemOverviewController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Get real statistics from database
-        $stats = $this->getSystemStats();
-        
-        return Inertia::render('SystemOverview', [
-            'stats' => $stats,
+        $data = [
+            'stats'        => $this->getSystemStats(),
             'systemHealth' => $this->getSystemHealth(),
-            'lastUpdated' => now()->toISOString(),
-        ]);
+            'lastUpdated'  => now()->toISOString(),
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('SystemOverview', $data);
     }
 
     private function getSystemStats()

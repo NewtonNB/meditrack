@@ -18,6 +18,7 @@ class Customer extends Model
         'email',
         'phone',
         'address',
+        'pharmacy_id',
         'created_by',
         'updated_by',
     ];

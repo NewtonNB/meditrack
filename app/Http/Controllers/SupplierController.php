@@ -26,83 +26,73 @@ class SupplierController extends Controller
         $this->auditService = $auditService;
         $this->notificationService = $notificationService;
     }
-    public function index(): Response
+    public function index(Request $request)
     {
-        $suppliers = Supplier::with(['creator', 'updater'])->latest()->paginate(10);
-        
-        return Inertia::render('Suppliers', [
+        $suppliers = Supplier::latest()->paginate($request->get('per_page', 15));
+
+        $data = [
             'suppliers' => $suppliers,
             'canManage' => auth()->user()->hasPermissionTo('manage_suppliers'),
-        ]);
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Suppliers', $data);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'name'    => ['required', 'string', 'max:255'],
+            'email'   => ['nullable', 'email', 'max:255'],
+            'phone'   => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
         ]);
 
         $supplier = Supplier::create($validated);
-        
-        // Log supplier creation
-        $this->auditService->logCustomActivity(
-            'supplier_created',
-            "Created supplier '{$supplier->name}'",
-            [
-                'supplier_id' => $supplier->id,
-                'supplier_name' => $supplier->name,
-                'email' => $supplier->email,
-                'phone' => $supplier->phone,
-            ]
-        );
 
-        // Send supplier notification
-        $this->notificationService->sendSupplierNotification($supplier, 'created');
-
-        // If request came from purchases page, redirect back with updated suppliers
-        if ($request->header('referer') && str_contains($request->header('referer'), '/purchases')) {
-            return redirect()->route('purchases.index')->with('success', 'Supplier added.');
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Supplier created.', 'supplier' => $supplier], 201);
         }
-        
+
         return back()->with('success', 'Supplier added.');
     }
 
-    public function update(Request $request, Supplier $supplier): RedirectResponse
+    public function update(Request $request, Supplier $supplier)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'name'    => ['required', 'string', 'max:255'],
+            'email'   => ['nullable', 'email', 'max:255'],
+            'phone'   => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
         ]);
 
         $supplier->update($validated);
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Supplier updated.', 'supplier' => $supplier->fresh()]);
+        }
+
         return back()->with('success', 'Supplier updated.');
     }
 
-    public function destroy(Supplier $supplier): RedirectResponse
+    public function destroy(Request $request, Supplier $supplier)
     {
-        // Check if supplier has medicines
         if ($supplier->medicines()->exists()) {
-            return back()->withErrors(['supplier' => 'Cannot delete supplier with existing medicines.']);
+            $msg = 'Cannot delete supplier with existing medicines.';
+            return $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => $msg], 422)
+                : back()->withErrors(['supplier' => $msg]);
         }
-        
-        // Log deletion before actually deleting
-        $this->auditService->logCustomActivity(
-            'supplier_deleted',
-            "Deleted supplier '{$supplier->name}'",
-            [
-                'supplier_id' => $supplier->id,
-                'supplier_name' => $supplier->name,
-                'email' => $supplier->email,
-                'phone' => $supplier->phone,
-            ]
-        );
-        
+
         $supplier->delete();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Supplier deleted.']);
+        }
+
         return back()->with('success', 'Supplier deleted.');
     }
 

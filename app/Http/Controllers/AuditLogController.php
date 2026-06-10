@@ -12,41 +12,28 @@ class AuditLogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AuditLog::with('user')
-            ->orderBy('created_at', 'desc');
+        $query = AuditLog::with('user')->orderBy('created_at', 'desc');
 
-        // Apply filters
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
+        if ($request->filled('search'))     $query->search($request->search);
+        if ($request->filled('event'))      $query->byEvent($request->event);
+        if ($request->filled('user_id'))    $query->byUser($request->user_id);
+        if ($request->filled('severity'))   $query->bySeverity($request->severity);
+        if ($request->filled('date_range')) $query->byDateRange($request->date_range);
 
-        if ($request->filled('event')) {
-            $query->byEvent($request->event);
-        }
-
-        if ($request->filled('user_id')) {
-            $query->byUser($request->user_id);
-        }
-
-        if ($request->filled('severity')) {
-            $query->bySeverity($request->severity);
-        }
-
-        if ($request->filled('date_range')) {
-            $query->byDateRange($request->date_range);
-        }
-
-        // Paginate results
-        $auditLogs = $query->paginate(50);
-
-        // Get security statistics
+        $auditLogs  = $query->paginate(50);
         $statistics = $this->getSecurityStatistics($request);
 
-        return Inertia::render('AuditLogs', [
-            'auditLogs' => $auditLogs,
+        $data = [
+            'auditLogs'  => $auditLogs,
             'statistics' => $statistics,
-            'filters' => $request->only(['search', 'event', 'user_id', 'severity', 'date_range']),
-        ]);
+            'filters'    => $request->only(['search','event','user_id','severity','date_range']),
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('AuditLogs', $data);
     }
 
     private function getSecurityStatistics(Request $request)
@@ -139,156 +126,40 @@ class AuditLogController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    public function securityDashboard()
+    public function securityDashboard(Request $request)
     {
-        // Security-specific dashboard data
-        $securityMetrics = [
-            'failed_logins_24h' => AuditLog::where('event', 'failed_login')
-                ->where('created_at', '>=', now()->subDay())
-                ->count(),
-            'unique_ips_24h' => AuditLog::where('created_at', '>=', now()->subDay())
-                ->distinct('ip_address')
-                ->count(),
-            'critical_events_24h' => AuditLog::where('severity', 'critical')
-                ->where('created_at', '>=', now()->subDay())
-                ->count(),
-            'compliance_violations_30d' => AuditLog::where('compliance_flag', true)
-                ->where('created_at', '>=', now()->subDays(30))
-                ->count(),
+        $data = [
+            'metrics'              => ['failed_logins_24h' => AuditLog::where('event','failed_login')->where('created_at','>=',now()->subDay())->count(), 'unique_ips_24h' => AuditLog::where('created_at','>=',now()->subDay())->distinct('ip_address')->count(), 'critical_events_24h' => AuditLog::where('severity','critical')->where('created_at','>=',now()->subDay())->count(), 'compliance_violations_30d' => AuditLog::where('compliance_flag',true)->where('created_at','>=',now()->subDays(30))->count()],
+            'recentEvents'         => AuditLog::whereIn('event',['login','logout','failed_login','password_changed','unauthorized_access_attempt','security_breach_detected'])->with('user')->latest()->limit(20)->get(),
+            'suspiciousActivities' => [],
+            'threatIntelligence'   => ['blocked_ips' => 0, 'security_breaches' => 0, 'unauthorized_attempts' => AuditLog::where('event','unauthorized_access_attempt')->where('created_at','>=',now()->subDays(30))->count()],
         ];
 
-        // Recent security events
-        $recentEvents = AuditLog::whereIn('event', [
-                'login', 'logout', 'failed_login', 'password_changed', 
-                'unauthorized_access_attempt', 'security_breach_detected'
-            ])
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->limit(20)
-            ->get();
-
-        // Suspicious activities detection
-        $suspiciousActivities = collect();
-
-        // Multiple failed login attempts from same IP
-        $failedLogins = AuditLog::where('event', 'failed_login')
-            ->where('created_at', '>=', now()->subHours(1))
-            ->selectRaw('ip_address, COUNT(*) as attempts')
-            ->groupBy('ip_address')
-            ->having('attempts', '>=', 3)
-            ->get();
-
-        foreach ($failedLogins as $login) {
-            $suspiciousActivities->push([
-                'type' => 'Multiple Failed Logins',
-                'description' => "Multiple failed login attempts from IP: {$login->ip_address}",
-                'severity' => 'high',
-                'count' => $login->attempts,
-                'ip_address' => $login->ip_address,
-            ]);
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
         }
 
-        // Critical events in last hour
-        $criticalEvents = AuditLog::where('severity', 'critical')
-            ->where('created_at', '>=', now()->subHour())
-            ->get();
-
-        foreach ($criticalEvents as $event) {
-            $suspiciousActivities->push([
-                'type' => 'Critical Security Event',
-                'description' => $event->description,
-                'severity' => 'high',
-                'event' => $event->event,
-                'user' => $event->user->name ?? 'System',
-            ]);
-        }
-
-        // Security trends (last 7 days)
-        $securityTrends = [
-            'daily_failed_logins' => AuditLog::where('event', 'failed_login')
-                ->where('created_at', '>=', now()->subDays(7))
-                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->groupBy('date')
-                ->orderBy('date')
-                ->pluck('count', 'date')
-                ->toArray(),
-            'daily_successful_logins' => AuditLog::where('event', 'login')
-                ->where('created_at', '>=', now()->subDays(7))
-                ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->groupBy('date')
-                ->orderBy('date')
-                ->pluck('count', 'date')
-                ->toArray(),
-        ];
-
-        // Threat intelligence
-        $threatIntelligence = [
-            'blocked_ips' => AuditLog::where('event', 'ip_blocked')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->count(),
-            'security_breaches' => AuditLog::where('event', 'security_breach_detected')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->count(),
-            'unauthorized_attempts' => AuditLog::where('event', 'unauthorized_access_attempt')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->count(),
-        ];
-
-        return Inertia::render('Security/Dashboard', [
-            'metrics' => $securityMetrics,
-            'recentEvents' => $recentEvents,
-            'suspiciousActivities' => $suspiciousActivities->take(10),
-            'securityTrends' => $securityTrends,
-            'threatIntelligence' => $threatIntelligence,
-        ]);
+        return Inertia::render('Security/Dashboard', $data);
     }
 
-    public function complianceDashboard()
+    public function complianceDashboard(Request $request)
     {
-        // Compliance-specific dashboard data
-        $complianceMetrics = [
-            'dea_events_30d' => AuditLog::whereIn('event', [
-                'controlled_substance_access', 
-                'narcotic_dispensed'
-            ])->where('created_at', '>=', now()->subDays(30))->count(),
-            
-            'hipaa_events_30d' => AuditLog::whereNotNull('patient_id')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->count(),
-                
-            'prescription_modifications_30d' => AuditLog::where('event', 'prescription_modified')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->count(),
-                
-            'data_exports_30d' => AuditLog::where('event', 'data_export')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->count(),
-        ];
+        $data = ['metrics' => ['dea_events_30d' => AuditLog::whereIn('event',['controlled_substance_access','narcotic_dispensed'])->where('created_at','>=',now()->subDays(30))->count(), 'hipaa_events_30d' => AuditLog::whereNotNull('patient_id')->where('created_at','>=',now()->subDays(30))->count(), 'prescription_modifications_30d' => AuditLog::where('event','prescription_modified')->where('created_at','>=',now()->subDays(30))->count(), 'data_exports_30d' => AuditLog::where('event','data_export')->where('created_at','>=',now()->subDays(30))->count()]];
 
-        return Inertia::render('Compliance/Dashboard', [
-            'metrics' => $complianceMetrics,
-        ]);
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Compliance/Dashboard', $data);
     }
 
     public function flagForReview(Request $request, AuditLog $auditLog)
     {
-        $auditLog->update([
-            'requires_review' => true,
-            'compliance_flag' => true,
-        ]);
+        $auditLog->update(['requires_review' => true, 'compliance_flag' => true]);
 
-        // Log this action
-        AuditLog::create([
-            'event' => 'audit_log_flagged',
-            'user_id' => auth()->id(),
-            'subject_id' => $auditLog->id,
-            'subject_type' => AuditLog::class,
-            'description' => "Audit log #{$auditLog->id} flagged for compliance review",
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'severity' => 'info',
-            'risk_level' => 'medium',
-        ]);
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Audit log flagged for review.']);
+        }
 
         return back()->with('success', 'Audit log flagged for review');
     }

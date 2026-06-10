@@ -25,13 +25,23 @@ class PurchaseController extends Controller
         $this->notificationService = $notificationService;
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
-        return Inertia::render('Purchases', [
-            'canManage' => true, // You can add proper permission check here
-            'suppliers' => Supplier::orderBy('name')->get(['id', 'name', 'phone', 'email', 'address']),
-            'medicines' => Medicine::orderBy('name')->get(['id', 'name', 'generic_name', 'cost_price']),
-        ]);
+        $purchases = Purchase::with(['supplier', 'items'])
+            ->latest()->paginate($request->get('per_page', 15));
+
+        $data = [
+            'purchases'  => $purchases,
+            'canManage'  => true,
+            'suppliers'  => Supplier::orderBy('name')->get(['id', 'name', 'phone', 'email', 'address']),
+            'medicines'  => Medicine::orderBy('name')->get(['id', 'name', 'generic_name', 'cost_price']),
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['purchases' => $purchases, 'canManage' => true]);
+        }
+
+        return Inertia::render('Purchases', $data);
     }
 
     public function create(): Response
@@ -42,40 +52,44 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'supplier_id' => ['required', 'exists:suppliers,id'],
-            'purchase_date' => ['required', 'date'],
-            'expected_delivery_date' => ['nullable', 'date', 'after_or_equal:purchase_date'],
-            'tax_amount' => ['nullable', 'numeric', 'min:0'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'shipping_cost' => ['nullable', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-            'payment_terms' => ['nullable', 'array'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.medicine_id' => ['required', 'exists:medicines,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
-            'items.*.notes' => ['nullable', 'string', 'max:255'],
+            'supplier_id'              => ['required', 'exists:suppliers,id'],
+            'purchase_date'            => ['required', 'date'],
+            'expected_delivery_date'   => ['nullable', 'date', 'after_or_equal:purchase_date'],
+            'tax_amount'               => ['nullable', 'numeric', 'min:0'],
+            'discount_amount'          => ['nullable', 'numeric', 'min:0'],
+            'shipping_cost'            => ['nullable', 'numeric', 'min:0'],
+            'notes'                    => ['nullable', 'string', 'max:1000'],
+            'payment_terms'            => ['nullable', 'array'],
+            'items'                    => ['required', 'array', 'min:1'],
+            'items.*.medicine_id'      => ['required', 'exists:medicines,id'],
+            'items.*.quantity'         => ['required', 'integer', 'min:1'],
+            'items.*.unit_cost'        => ['required', 'numeric', 'min:0'],
+            'items.*.notes'            => ['nullable', 'string', 'max:255'],
         ]);
 
         $purchase = $this->purchaseService->createPurchase($validated);
-
-        // Send purchase order notification
         $this->notificationService->sendPurchaseOrderNotification($purchase, 'created');
 
-        return redirect()->route('purchases.show', $purchase)
-                        ->with('success', 'Purchase order created successfully.');
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Purchase created.', 'purchase' => $purchase->load('supplier', 'items')], 201);
+        }
+
+        return redirect()->route('purchases.show', $purchase)->with('success', 'Purchase order created successfully.');
     }
 
-    public function show(Purchase $purchase): Response
+    public function show(Request $request, Purchase $purchase)
     {
         $purchase->load(['supplier', 'user', 'items.medicine', 'stockMovements']);
+        $data = ['purchase' => $purchase];
 
-        return Inertia::render('Purchases/Show', [
-            'purchase' => $purchase,
-        ]);
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Purchases/Show', $data);
     }
 
     public function edit(Purchase $purchase): Response
@@ -94,110 +108,132 @@ class PurchaseController extends Controller
         ]);
     }
 
-    public function update(Request $request, Purchase $purchase): RedirectResponse
+    public function update(Request $request, Purchase $purchase)
     {
         if (in_array($purchase->status, ['received', 'cancelled'])) {
-            return redirect()->route('purchases.show', $purchase)
-                           ->with('error', 'Cannot update a purchase that is already received or cancelled.');
+            $msg = 'Cannot update a purchase that is already received or cancelled.';
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => $msg], 422)
+                : redirect()->route('purchases.show', $purchase)->with('error', $msg);
         }
 
         $validated = $request->validate([
-            'supplier_id' => ['required', 'exists:suppliers,id'],
-            'purchase_date' => ['required', 'date'],
+            'supplier_id'            => ['required', 'exists:suppliers,id'],
+            'purchase_date'          => ['required', 'date'],
             'expected_delivery_date' => ['nullable', 'date', 'after_or_equal:purchase_date'],
-            'tax_amount' => ['nullable', 'numeric', 'min:0'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'shipping_cost' => ['nullable', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-            'payment_terms' => ['nullable', 'array'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.medicine_id' => ['required', 'exists:medicines,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
-            'items.*.notes' => ['nullable', 'string', 'max:255'],
+            'tax_amount'             => ['nullable', 'numeric', 'min:0'],
+            'discount_amount'        => ['nullable', 'numeric', 'min:0'],
+            'shipping_cost'          => ['nullable', 'numeric', 'min:0'],
+            'notes'                  => ['nullable', 'string', 'max:1000'],
+            'payment_terms'          => ['nullable', 'array'],
+            'items'                  => ['required', 'array', 'min:1'],
+            'items.*.medicine_id'    => ['required', 'exists:medicines,id'],
+            'items.*.quantity'       => ['required', 'integer', 'min:1'],
+            'items.*.unit_cost'      => ['required', 'numeric', 'min:0'],
+            'items.*.notes'          => ['nullable', 'string', 'max:255'],
         ]);
 
         $purchase = $this->purchaseService->updatePurchase($purchase, $validated);
 
-        return redirect()->route('purchases.show', $purchase)
-                        ->with('success', 'Purchase order updated successfully.');
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Purchase updated.', 'purchase' => $purchase->fresh(['supplier', 'items'])]);
+        }
+
+        return redirect()->route('purchases.show', $purchase)->with('success', 'Purchase order updated successfully.');
     }
 
-    public function destroy(Purchase $purchase): RedirectResponse
+    public function destroy(Request $request, Purchase $purchase)
     {
         if (in_array($purchase->status, ['received', 'partially_received'])) {
-            return redirect()->route('purchases.show', $purchase)
-                           ->with('error', 'Cannot delete a purchase that has been received.');
+            $msg = 'Cannot delete a purchase that has been received.';
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => $msg], 422)
+                : redirect()->route('purchases.show', $purchase)->with('error', $msg);
         }
 
         $purchase->delete();
 
-        return redirect()->route('purchases.index')
-                        ->with('success', 'Purchase order deleted successfully.');
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Purchase deleted.']);
+        }
+
+        return redirect()->route('purchases.index')->with('success', 'Purchase order deleted successfully.');
     }
 
-    public function receive(Purchase $purchase): Response
+    public function receive(Request $request, Purchase $purchase)
     {
         if (in_array($purchase->status, ['received', 'cancelled'])) {
-            return redirect()->route('purchases.show', $purchase)
-                           ->with('error', 'This purchase cannot be received.');
+            $msg = 'This purchase cannot be received.';
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => $msg], 422)
+                : redirect()->route('purchases.show', $purchase)->with('error', $msg);
         }
 
         $purchase->load(['supplier', 'items.medicine']);
 
-        return Inertia::render('Purchases/Receive', [
-            'purchase' => $purchase,
-        ]);
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['purchase' => $purchase]);
+        }
+
+        return Inertia::render('Purchases/Receive', ['purchase' => $purchase]);
     }
 
-    public function processReceive(Request $request, Purchase $purchase): RedirectResponse
+    public function processReceive(Request $request, Purchase $purchase)
     {
         $validated = $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.purchase_item_id' => ['required', 'exists:purchase_items,id'],
-            'items.*.quantity_received' => ['required', 'integer', 'min:0'],
-            'items.*.batch_number' => ['nullable', 'string', 'max:100'],
-            'items.*.expiry_date' => ['nullable', 'date', 'after:today'],
-            'items.*.manufacturing_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'items'                       => ['required', 'array', 'min:1'],
+            'items.*.purchase_item_id'    => ['required', 'exists:purchase_items,id'],
+            'items.*.quantity_received'   => ['required', 'integer', 'min:0'],
+            'items.*.batch_number'        => ['nullable', 'string', 'max:100'],
+            'items.*.expiry_date'         => ['nullable', 'date', 'after:today'],
+            'items.*.manufacturing_date'  => ['nullable', 'date', 'before_or_equal:today'],
         ]);
 
         $purchase = $this->purchaseService->receivePurchase($purchase, $validated['items']);
-
-        // Send purchase received notification
         $this->notificationService->sendPurchaseOrderNotification($purchase, 'received');
 
-        return redirect()->route('purchases.show', $purchase)
-                        ->with('success', 'Purchase items received successfully.');
-    }
-
-    public function cancel(Request $request, Purchase $purchase): RedirectResponse
-    {
-        if (in_array($purchase->status, ['received', 'cancelled'])) {
-            return redirect()->route('purchases.show', $purchase)
-                           ->with('error', 'This purchase cannot be cancelled.');
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Purchase received.', 'purchase' => $purchase->fresh()]);
         }
 
-        $validated = $request->validate([
-            'reason' => ['required', 'string', 'max:500'],
-        ]);
-
-        $this->purchaseService->cancelPurchase($purchase, $validated['reason']);
-
-        return redirect()->route('purchases.show', $purchase)
-                        ->with('success', 'Purchase order cancelled successfully.');
+        return redirect()->route('purchases.show', $purchase)->with('success', 'Purchase items received successfully.');
     }
 
-    public function markAsOrdered(Purchase $purchase): RedirectResponse
+    public function cancel(Request $request, Purchase $purchase)
+    {
+        if (in_array($purchase->status, ['received', 'cancelled'])) {
+            $msg = 'This purchase cannot be cancelled.';
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => $msg], 422)
+                : redirect()->route('purchases.show', $purchase)->with('error', $msg);
+        }
+
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:500']]);
+        $this->purchaseService->cancelPurchase($purchase, $validated['reason']);
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Purchase cancelled.']);
+        }
+
+        return redirect()->route('purchases.show', $purchase)->with('success', 'Purchase order cancelled successfully.');
+    }
+
+    public function markAsOrdered(Request $request, Purchase $purchase)
     {
         if ($purchase->status !== 'pending') {
-            return redirect()->route('purchases.show', $purchase)
-                           ->with('error', 'Only pending purchases can be marked as ordered.');
+            $msg = 'Only pending purchases can be marked as ordered.';
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => $msg], 422)
+                : redirect()->route('purchases.show', $purchase)->with('error', $msg);
         }
 
         $purchase->update(['status' => 'ordered']);
 
-        return redirect()->route('purchases.show', $purchase)
-                        ->with('success', 'Purchase order marked as ordered.');
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Marked as ordered.', 'purchase' => $purchase->fresh()]);
+        }
+
+        return redirect()->route('purchases.show', $purchase)->with('success', 'Purchase order marked as ordered.');
     }
 
     public function report(Request $request): JsonResponse

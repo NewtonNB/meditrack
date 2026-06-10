@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\PharmacyClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use App\Services\PermissionService;
@@ -25,202 +26,141 @@ class UserManagementController extends Controller
         $this->auditService = $auditService;
     }
 
-    /**
-     * Display a listing of users.
-     */
-    public function index(): InertiaResponse
+    public function index(Request $request): InertiaResponse|JsonResponse
     {
-        $user = auth()->user();
-        
-        $query = User::select(['id', 'name', 'email', 'role', 'pharmacy_id', 'is_active', 'last_login_at', 'created_at']);
-        
-        // Super admins see all users, pharmacy admins see only their pharmacy users
+        $user  = auth()->user();
+        $query = User::select(['id','name','email','role','pharmacy_id','is_active','last_login_at','created_at']);
+
         if (!$user->isSuperAdmin()) {
             $query->where('pharmacy_id', $user->pharmacy_id);
         }
-        
+
         $users = $query->latest()->paginate(15);
-        
-        // Safely serialize users data without problematic relationships
+
         $serializedUsers = [
-            'data' => collect($users->items())->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name ?? '',
-                    'email' => $user->email ?? '',
-                    'role' => $user->role ?? 'user',
-                    'pharmacy_id' => $user->pharmacy_id,
-                    'is_active' => $user->is_active ?? true,
-                    'avatar_url' => $user->avatar_url,
-                    'last_login_at' => $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i:s') : null,
-                    'created_at' => $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : null,
-                ];
-            })->toArray(),
+            'data'         => $users->map(fn($u) => [
+                'id'           => $u->id,
+                'name'         => $u->name ?? '',
+                'email'        => $u->email ?? '',
+                'role'         => $u->role ?? 'user',
+                'pharmacy_id'  => $u->pharmacy_id,
+                'is_active'    => $u->is_active ?? true,
+                'avatar_url'   => $u->avatar_url ?? null,
+                'last_login_at'=> $u->last_login_at?->format('Y-m-d H:i:s'),
+                'created_at'   => $u->created_at?->format('Y-m-d H:i:s'),
+            ])->toArray(),
             'current_page' => $users->currentPage(),
-            'last_page' => $users->lastPage(),
-            'per_page' => $users->perPage(),
-            'total' => $users->total(),
+            'last_page'    => $users->lastPage(),
+            'per_page'     => $users->perPage(),
+            'total'        => $users->total(),
         ];
-        
-        // Safely serialize roles
-        $roles = $this->permissionService->getAllRoles();
-        $serializedRoles = collect($roles)->map(function ($role) {
-            if (is_string($role)) {
-                return [
-                    'id' => null,
-                    'name' => $role,
-                    'display_name' => $role,
-                ];
-            }
-            return [
-                'id' => $role->id ?? null,
-                'name' => $role->name ?? 'unknown',
-                'display_name' => $role->display_name ?? $role->name ?? 'Unknown Role',
-            ];
-        })->toArray();
-        
-        // Safely serialize pharmacies
-        $serializedPharmacies = [];
-        if ($user->isSuperAdmin()) {
-            $pharmacies = PharmacyClient::select(['id', 'name', 'email'])->get();
-            $serializedPharmacies = $pharmacies->map(function ($pharmacy) {
-                return [
-                    'id' => $pharmacy->id,
-                    'name' => $pharmacy->name,
-                    'email' => $pharmacy->email ?? null,
-                ];
-            })->toArray();
-        } else {
-            // Get user's pharmacy safely
-            $userPharmacy = PharmacyClient::select(['id', 'name', 'email'])
-                ->where('id', $user->pharmacy_id)
-                ->first();
-            
-            if ($userPharmacy) {
-                $serializedPharmacies = [[
-                    'id' => $userPharmacy->id,
-                    'name' => $userPharmacy->name,
-                    'email' => $userPharmacy->email ?? null,
-                ]];
-            }
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['users' => $serializedUsers]);
         }
-        
+
+        $roles       = collect($this->permissionService->getAllRoles())->map(fn($r) => is_string($r)
+            ? ['id' => null, 'name' => $r, 'display_name' => $r]
+            : ['id' => $r->id ?? null, 'name' => $r->name ?? 'unknown', 'display_name' => $r->display_name ?? $r->name]
+        )->toArray();
+
+        $pharmacies = $user->isSuperAdmin()
+            ? PharmacyClient::select(['id','name','email'])->get()->toArray()
+            : (PharmacyClient::find($user->pharmacy_id)
+                ? [['id' => $user->pharmacy_id, 'name' => PharmacyClient::find($user->pharmacy_id)->name, 'email' => null]]
+                : []);
+
         return Inertia::render('UserManagement', [
-            'users' => $serializedUsers,
-            'roles' => $serializedRoles,
-            'pharmacies' => $serializedPharmacies,
+            'users'        => $serializedUsers,
+            'roles'        => $roles,
+            'pharmacies'   => $pharmacies,
             'canManageAll' => (bool) $user->isSuperAdmin(),
-            'filters' => [
-                'search' => (string) (request('search') ?? ''),
-                'role' => (string) (request('role') ?? ''),
-                'status' => (string) (request('status') ?? ''),
-            ],
+            'filters'      => ['search' => (string)(request('search') ?? ''), 'role' => (string)(request('role') ?? ''), 'status' => (string)(request('status') ?? '')],
         ]);
     }
 
-    /**
-     * Store a newly created user.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        $user = auth()->user();
-        
+        $user      = auth()->user();
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', Rules\Password::defaults()],
-            'role' => ['required', 'string'],
+            'name'        => ['required', 'string', 'max:255'],
+            'email'       => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password'    => ['required', Rules\Password::defaults()],
+            'role'        => ['required', 'string'],
             'pharmacy_id' => ['nullable', 'exists:pharmacy_clients,id'],
         ]);
 
-        // Validate pharmacy assignment
-        if (!$user->isSuperAdmin()) {
-            $validated['pharmacy_id'] = $user->pharmacy_id; // Force same pharmacy
-        }
-
-        // Validate role assignment permissions
+        if (!$user->isSuperAdmin()) $validated['pharmacy_id'] = $user->pharmacy_id;
         if (!$this->canAssignRole($user, $validated['role'])) {
-            return back()->withErrors(['role' => 'You cannot assign this role.']);
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Cannot assign this role.'], 422)
+                : back()->withErrors(['role' => 'You cannot assign this role.']);
         }
 
-        $newUser = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'pharmacy_id' => $validated['pharmacy_id'],
-            'role' => $validated['role'], // Legacy field
-        ]);
-
-        // Assign role using RBAC system
+        $newUser = User::create(['name' => $validated['name'], 'email' => $validated['email'], 'password' => Hash::make($validated['password']), 'pharmacy_id' => $validated['pharmacy_id'], 'role' => $validated['role']]);
         $this->permissionService->assignRoleToUser($newUser, $validated['role']);
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'User created.', 'user' => $newUser], 201);
+        }
 
         return back()->with('success', 'User created successfully.');
     }
 
-    /**
-     * Update the specified user.
-     */
-    public function update(Request $request, User $targetUser): RedirectResponse
+    public function update(Request $request, User $targetUser)
     {
         $currentUser = auth()->user();
-        
-        // Check if current user can manage this user
         if (!$this->canManageUser($currentUser, $targetUser)) {
-            abort(403, 'You cannot manage this user.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $targetUser->id],
-            'role' => ['required', 'string'],
+            'name'        => ['required', 'string', 'max:255'],
+            'email'       => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$targetUser->id],
+            'role'        => ['required', 'string'],
             'pharmacy_id' => ['nullable', 'exists:pharmacy_clients,id'],
         ]);
 
-        // Validate pharmacy assignment
-        if (!$currentUser->isSuperAdmin()) {
-            $validated['pharmacy_id'] = $currentUser->pharmacy_id; // Force same pharmacy
-        }
-
-        // Validate role assignment permissions
+        if (!$currentUser->isSuperAdmin()) $validated['pharmacy_id'] = $currentUser->pharmacy_id;
         if (!$this->canAssignRole($currentUser, $validated['role'])) {
-            return back()->withErrors(['role' => 'You cannot assign this role.']);
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Cannot assign this role.'], 422)
+                : back()->withErrors(['role' => 'You cannot assign this role.']);
         }
 
         $oldRole = $targetUser->getPrimaryRole();
-        
-        $targetUser->update([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'pharmacy_id' => $validated['pharmacy_id'],
-            'role' => $validated['role'], // Legacy field
-        ]);
+        $targetUser->update(['name' => $validated['name'], 'email' => $validated['email'], 'pharmacy_id' => $validated['pharmacy_id'], 'role' => $validated['role']]);
+        if ($oldRole !== $validated['role']) $this->permissionService->syncUserRoles($targetUser, [$validated['role']]);
 
-        // Update role if changed
-        if ($oldRole !== $validated['role']) {
-            $this->permissionService->syncUserRoles($targetUser, [$validated['role']]);
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'User updated.', 'user' => $targetUser->fresh()]);
         }
 
         return back()->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Remove the specified user.
-     */
-    public function destroy(User $targetUser): RedirectResponse
+    public function destroy(Request $request, User $targetUser)
     {
         $currentUser = auth()->user();
-        
-        // Check if current user can manage this user
         if (!$this->canManageUser($currentUser, $targetUser)) {
-            abort(403, 'You cannot delete this user.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
 
-        // Prevent self-deletion
         if ($currentUser->id === $targetUser->id) {
-            return back()->withErrors(['user' => 'You cannot delete your own account.']);
+            $msg = 'You cannot delete your own account.';
+            return $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => $msg], 422)
+                : back()->withErrors(['user' => $msg]);
         }
 
         $targetUser->delete();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'User deleted.']);
+        }
+
         return back()->with('success', 'User deleted successfully.');
     }
 

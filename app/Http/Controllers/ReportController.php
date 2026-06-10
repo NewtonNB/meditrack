@@ -18,11 +18,15 @@ class ReportController extends Controller
         $this->reportService = $reportService;
     }
 
-    public function index(): InertiaResponse
+    public function index(Request $request)
     {
-        return Inertia::render('Reports/Index', [
-            'statistics' => $this->reportService->getReportStatistics(),
-        ]);
+        $data = ['statistics' => $this->reportService->getReportStatistics()];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Reports/Index', $data);
     }
 
     // Sales Reports

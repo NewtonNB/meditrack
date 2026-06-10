@@ -18,9 +18,14 @@ class AnalyticsController extends Controller
     /**
      * Display the analytics dashboard - redirect to enhanced dashboard
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Redirect to the enhanced analytics dashboard
+        $data = ['summary' => $this->analyticsService->getDashboardSummary()];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
         return redirect()->route('dashboard.enhanced');
     }
 

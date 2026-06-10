@@ -36,15 +36,19 @@ class InventoryController extends Controller
     public function index(Request $request)
     {
         $warehouseId = $request->get('warehouse_id');
-        
+
         $data = [
-            'warehouses' => Warehouse::active()->get(),
-            'summary' => $this->inventoryService->getInventorySummary($warehouseId),
-            'lowStockItems' => $this->inventoryService->getLowStockItems($warehouseId)->take(10),
+            'summary'         => $this->inventoryService->getInventorySummary($warehouseId),
+            'lowStockItems'   => $this->inventoryService->getLowStockItems($warehouseId)->take(10),
             'expiringBatches' => $this->inventoryService->getExpiringBatches(30, $warehouseId)->take(10),
-            'recentMovements' => $this->inventoryService->getStockMovements(null, $warehouseId, 20)
+            'recentMovements' => $this->inventoryService->getStockMovements(null, $warehouseId, 20),
         ];
 
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        $data['warehouses'] = Warehouse::active()->get();
         return Inertia::render('Inventory/Dashboard', $data);
     }
 
@@ -53,80 +57,39 @@ class InventoryController extends Controller
      */
     public function stockMovementsIndex(Request $request)
     {
-        $perPage = $request->get('per_page', 10);
-        $medicineId = $request->get('medicine_id');
-        $warehouseId = $request->get('warehouse_id');
-        $type = $request->get('type');
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
-        $search = $request->get('search');
-
-        // Build query
-        $query = StockMovement::with(['medicine', 'creator', 'sale.customer'])
+        $query = StockMovement::with(['medicine', 'creator'])
             ->orderBy('created_at', 'desc');
 
-        // Apply filters
-        if ($medicineId) {
-            $query->where('medicine_id', $medicineId);
+        if ($request->medicine_id)  $query->where('medicine_id', $request->medicine_id);
+        if ($request->warehouse_id) $query->where('warehouse_id', $request->warehouse_id);
+        if ($request->type)         $query->where('movement_type', $request->type);
+        if ($request->date_from)    $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->date_to)      $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->search) {
+            $s = $request->search;
+            $query->where(fn($q) => $q->whereHas('medicine', fn($m) => $m->where('name','like',"%$s%"))
+                ->orWhere('reference','like',"%$s%")->orWhere('notes','like',"%$s%"));
         }
 
-        if ($warehouseId) {
-            $query->where('warehouse_id', $warehouseId);
-        }
-
-        if ($type) {
-            $query->where('movement_type', $type);
-        }
-
-        if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
-        }
-
-        if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
-        }
-
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->whereHas('medicine', function($mq) use ($search) {
-                    $mq->where('name', 'like', "%{$search}%")
-                      ->orWhere('generic_name', 'like', "%{$search}%");
-                })
-                ->orWhere('reference', 'like', "%{$search}%")
-                ->orWhere('notes', 'like', "%{$search}%");
-            });
-        }
-
-        $movements = $query->paginate($perPage);
-
-        // Get medicines for dropdown
-        $medicines = Medicine::select('id', 'name', 'generic_name', 'brand')
-            ->orderBy('name')
-            ->get();
-
-        // Calculate statistics
+        $movements = $query->paginate($request->get('per_page', 10));
+        $medicines = Medicine::select('id','name','generic_name','brand')->orderBy('name')->get();
         $stats = [
-            'total_in' => StockMovement::where('movement_type', 'in')->sum('quantity'),
-            'total_out' => abs(StockMovement::where('movement_type', 'out')->sum('quantity')), // Make positive for display
-            'total_adjustments' => abs(StockMovement::whereIn('movement_type', ['adjustment', 'expired'])->sum('quantity')), // Make positive for display
+            'total_in'          => StockMovement::where('movement_type','in')->sum('quantity'),
+            'total_out'         => abs(StockMovement::where('movement_type','out')->sum('quantity')),
+            'total_adjustments' => abs(StockMovement::whereIn('movement_type',['adjustment','expired'])->sum('quantity')),
         ];
 
-        return Inertia::render('StockMovements', [
-            'stockMovements' => $movements,
-            'medicines' => $medicines,
-            'stats' => $stats,
-            'filters' => [
-                'search' => $search,
-                'type' => $type,
-                'medicine_id' => $medicineId,
-                'warehouse_id' => $warehouseId,
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
-                'per_page' => $perPage,
-            ],
-            'canManage' => auth()->user()->can('manage_medicines'),
-            'canViewCosts' => auth()->user()->can('view_costs') || auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('pharmacy_admin'),
-        ]);
+        $data = ['stockMovements' => $movements, 'medicines' => $medicines, 'stats' => $stats];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('StockMovements', array_merge($data, [
+            'filters'      => $request->only(['search','type','medicine_id','warehouse_id','date_from','date_to','per_page']),
+            'canManage'    => auth()->user()->can('manage_medicines'),
+            'canViewCosts' => auth()->user()->can('view_costs') || auth()->user()->hasRole('super_admin'),
+        ]));
     }
 
     /**
@@ -151,21 +114,26 @@ class InventoryController extends Controller
         }
 
         try {
-            // Create the stock movement record
             $movement = StockMovement::create([
-                'medicine_id' => $request->medicine_id,
-                'warehouse_id' => $request->warehouse_id ?? 1,
+                'medicine_id'   => $request->medicine_id,
+                'warehouse_id'  => $request->warehouse_id ?? 1,
                 'movement_type' => $request->movement_type,
-                'quantity' => $request->movement_type === 'in' ? $request->quantity : -$request->quantity,
-                'unit_cost' => $request->unit_cost,
-                'reference' => $request->reference ?? 'MANUAL-' . time(),
-                'notes' => $request->notes,
-                'created_by' => auth()->id(),
+                'quantity'      => $request->movement_type === 'in' ? $request->quantity : -$request->quantity,
+                'unit_cost'     => $request->unit_cost,
+                'reference'     => $request->reference ?? 'MANUAL-'.time(),
+                'notes'         => $request->notes,
+                'created_by'    => auth()->id(),
             ]);
 
-            return back()->with('success', 'Stock movement recorded successfully');
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json(['message' => 'Stock movement recorded.', 'movement' => $movement], 201);
+            }
 
+            return back()->with('success', 'Stock movement recorded successfully');
         } catch (\Exception $e) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 500);
+            }
             return back()->with('error', 'Failed to record stock movement: ' . $e->getMessage());
         }
     }

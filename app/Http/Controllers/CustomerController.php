@@ -20,98 +20,96 @@ class CustomerController extends Controller
         $this->permissionService = $permissionService;
         $this->auditService = $auditService;
     }
-    public function index(): Response
+    public function index(Request $request)
     {
-        $user = auth()->user();
-        
-        $customers = Customer::with(['creator', 'updater'])
+        $user      = auth()->user();
+        $customers = Customer::with(['creator'])
             ->where('pharmacy_id', $user->pharmacy_id ?? 1)
-            ->latest()
-            ->paginate(10);
-        
-        return Inertia::render('Customers', [
+            ->latest()->paginate($request->get('per_page', 15));
+
+        $data = [
             'customers' => $customers,
             'canManage' => $user->hasPermissionTo('manage_customers'),
             'canCreate' => $user->hasAnyPermission(['manage_customers', 'process_sales']),
-        ]);
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Customers', $data);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $user = auth()->user();
-        
-        // Check permission - both cashiers and managers can create customers
         if (!$user->hasAnyPermission(['manage_customers', 'process_sales'])) {
-            abort(403, 'Insufficient permissions to create customers.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
-        
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'name'    => ['required', 'string', 'max:255'],
+            'email'   => ['nullable', 'email', 'max:255'],
+            'phone'   => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $validated['pharmacy_id'] = $user->pharmacy_id ?? 1;
+        $validated['created_by']  = $user->id;
+
         $customer = Customer::create($validated);
-        
-        // Log customer creation
-        $this->auditService->logCustomActivity(
-            'customer_created',
-            "Created customer '{$customer->name}'",
-            [
-                'customer_id' => $customer->id,
-                'customer_name' => $customer->name,
-                'email' => $customer->email,
-                'phone' => $customer->phone,
-            ]
-        );
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Customer created.', 'customer' => $customer], 201);
+        }
 
         return back()->with('success', 'Customer added.');
     }
 
-    public function update(Request $request, Customer $customer): RedirectResponse
+    public function update(Request $request, Customer $customer)
     {
-        // Check permission - only managers can update customers
         if (!auth()->user()->hasPermissionTo('manage_customers')) {
-            abort(403, 'Insufficient permissions to update customers.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
-        
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'name'    => ['required', 'string', 'max:255'],
+            'email'   => ['nullable', 'email', 'max:255'],
+            'phone'   => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
         ]);
 
         $customer->update($validated);
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Customer updated.', 'customer' => $customer->fresh()]);
+        }
+
         return back()->with('success', 'Customer updated.');
     }
 
-    public function destroy(Customer $customer): RedirectResponse
+    public function destroy(Request $request, Customer $customer)
     {
-        // Check permission - only managers can delete customers
         if (!auth()->user()->hasPermissionTo('manage_customers')) {
-            abort(403, 'Insufficient permissions to delete customers.');
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
-        
-        // Check if customer has sales
+
         if ($customer->sales()->exists()) {
-            return back()->withErrors(['customer' => 'Cannot delete customer with existing sales records.']);
+            $msg = 'Cannot delete customer with existing sales records.';
+            return $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => $msg], 422)
+                : back()->withErrors(['customer' => $msg]);
         }
-        
-        // Log deletion before actually deleting
-        $this->auditService->logCustomActivity(
-            'customer_deleted',
-            "Deleted customer '{$customer->name}'",
-            [
-                'customer_id' => $customer->id,
-                'customer_name' => $customer->name,
-                'email' => $customer->email,
-                'phone' => $customer->phone,
-            ]
-        );
-        
+
         $customer->delete();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Customer deleted.']);
+        }
+
         return back()->with('success', 'Customer deleted.');
     }
 
