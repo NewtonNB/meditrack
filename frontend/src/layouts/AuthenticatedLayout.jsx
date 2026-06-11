@@ -16,8 +16,10 @@ const navItems = [
   { to: '/reports',         icon: 'bi-bar-chart',        label: 'Reports' },
   { to: '/analytics',       icon: 'bi-graph-up',         label: 'Analytics' },
   { to: '/automation',      icon: 'bi-robot',            label: 'Automation' },
+  { to: '/system-overview', icon: 'bi-diagram-3',       label: 'System Overview' },
   { to: '/notifications',   icon: 'bi-bell',             label: 'Notifications' },
   { to: '/audit-logs',      icon: 'bi-shield-check',     label: 'Audit Logs' },
+  { to: '/profile',         icon: 'bi-person',           label: 'Profile' },
   { to: '/users',           icon: 'bi-person-gear',      label: 'Users' },
   { to: '/settings',        icon: 'bi-gear',             label: 'Settings' },
 ];

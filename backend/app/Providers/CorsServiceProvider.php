@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class CorsServiceProvider extends ServiceProvider
+{
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        $this->app['Illuminate\Http\Middleware\HandleCors']->handleCors(
+            $this->app['request']
+        );
+    }
+}
