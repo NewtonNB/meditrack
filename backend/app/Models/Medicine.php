@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\TenantScope;
 use App\Traits\Auditable;
@@ -10,10 +11,11 @@ use App\Traits\TracksActivity;
 
 class Medicine extends Model
 {
-    use HasFactory, TenantScope, Auditable, TracksActivity;
+    use HasFactory, SoftDeletes, TenantScope, Auditable, TracksActivity;
 
     protected $fillable = [
         'name',
+        'generic_name',
         'code',
         'brand',
         'batch_number',

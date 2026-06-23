@@ -4,16 +4,23 @@ import { login as apiLogin, logout as apiLogout, getMe } from '../api/auth';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]           = useState(null);
+  const [permissions, setPermissions] = useState([]);
+  const [roles, setRoles]             = useState([]);
+  const [loading, setLoading]     = useState(true);
 
   // Rehydrate from localStorage on mount
   useEffect(() => {
     const token    = localStorage.getItem('auth_token');
     const cached   = localStorage.getItem('auth_user');
+    const cachedPerms = localStorage.getItem('auth_permissions');
+    const cachedRoles = localStorage.getItem('auth_roles');
+    
     if (token && cached) {
       try {
         setUser(JSON.parse(cached));
+        if (cachedPerms) setPermissions(JSON.parse(cachedPerms));
+        if (cachedRoles) setRoles(JSON.parse(cachedRoles));
       } catch (_) {}
     }
     if (token) {
@@ -21,12 +28,20 @@ export function AuthProvider({ children }) {
       getMe()
         .then(({ data }) => {
           setUser(data.user);
+          setPermissions(data.user.permissions || []);
+          setRoles(data.user.roles || []);
           localStorage.setItem('auth_user', JSON.stringify(data.user));
+          localStorage.setItem('auth_permissions', JSON.stringify(data.user.permissions || []));
+          localStorage.setItem('auth_roles', JSON.stringify(data.user.roles || []));
         })
         .catch(() => {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_user');
+          localStorage.removeItem('auth_permissions');
+          localStorage.removeItem('auth_roles');
           setUser(null);
+          setPermissions([]);
+          setRoles([]);
         })
         .finally(() => setLoading(false));
     } else {
@@ -38,7 +53,11 @@ export function AuthProvider({ children }) {
     const { data } = await apiLogin(credentials);
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('auth_user', JSON.stringify(data.user));
+    localStorage.setItem('auth_permissions', JSON.stringify(data.user.permissions || []));
+    localStorage.setItem('auth_roles', JSON.stringify(data.user.roles || []));
     setUser(data.user);
+    setPermissions(data.user.permissions || []);
+    setRoles(data.user.roles || []);
     return data;
   }, []);
 
@@ -46,7 +65,11 @@ export function AuthProvider({ children }) {
     try { await apiLogout(); } catch (_) {}
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_permissions');
+    localStorage.removeItem('auth_roles');
     setUser(null);
+    setPermissions([]);
+    setRoles([]);
   }, []);
 
   const isRole = (...roles) => roles.includes(user?.role);
@@ -54,10 +77,29 @@ export function AuthProvider({ children }) {
   const isPharmacyAdmin = () => isRole('pharmacy_admin');
   const isPharmacist    = () => isRole('pharmacist');
   const isCashier       = () => isRole('cashier');
+  
+  const hasPermission = (permission) => permissions.includes(permission);
+  const hasAnyPermission = (...perms) => perms.some(p => permissions.includes(p));
+  const hasAllPermissions = (...perms) => perms.every(p => permissions.includes(p));
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, isRole, isSuperAdmin, isPharmacyAdmin, isPharmacist, isCashier }}
+      value={{ 
+        user, 
+        permissions,
+        roles,
+        loading, 
+        login, 
+        logout, 
+        isRole, 
+        isSuperAdmin, 
+        isPharmacyAdmin, 
+        isPharmacist, 
+        isCashier,
+        hasPermission,
+        hasAnyPermission,
+        hasAllPermissions,
+      }}
     >
       {children}
     </AuthContext.Provider>

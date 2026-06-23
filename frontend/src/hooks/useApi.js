@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
+/** Normalize paginated or wrapped API list responses into an array. */
+export function getListItems(data) {
+  if (Array.isArray(data?.data?.data)) return data.data.data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
 /**
  * Generic hook for API calls.
  * Usage:

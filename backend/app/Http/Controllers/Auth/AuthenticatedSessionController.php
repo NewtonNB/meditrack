@@ -47,10 +47,10 @@ class AuthenticatedSessionController extends Controller
                     'role'        => $user->role,
                     'pharmacy_id' => $user->pharmacy_id,
                     'avatar'      => $user->avatar,
+                    'permissions' => $user->getPermissionsViaRoles()->pluck('name')->toArray(),
+                    'roles'       => $user->getRoleNames()->toArray(),
                 ],
-            ])
-            ->header('Access-Control-Allow-Origin', 'http://localhost:3000')
-            ->header('Access-Control-Allow-Credentials', 'true');
+            ]);
         }
 
         // Web request: session-based

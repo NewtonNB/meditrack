@@ -50,7 +50,7 @@ return new class extends Migration
             
             // Profit Tracking
             if (!Schema::hasColumn('sales', 'total_cost')) {
-                $table->decimal('total_cost', 10, 2)->default(0)->after('total_amount');
+                $table->decimal('total_cost', 10, 2)->default(0)->after('total_price');
             }
             if (!Schema::hasColumn('sales', 'profit_margin')) {
                 $table->decimal('profit_margin', 5, 2)->default(0)->after('total_cost');
@@ -153,7 +153,7 @@ return new class extends Migration
             $table->foreignId('customer_id')->nullable()->constrained()->onDelete('cascade');
             $table->integer('usage_limit')->default(1);
             $table->integer('usage_count')->default(0);
-            $table->timestamp('expires_at');
+            $table->timestamp('expires_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             

@@ -54,11 +54,13 @@ class SettingsController extends Controller
             'tax_rate'         => 'required|numeric|min:0|max:100',
             'currency'         => 'required|string|max:10',
             'receipt_footer'   => 'nullable|string|max:255',
+            'bank_accounts'    => 'nullable|string',
+            'payment_gateways' => 'nullable|string',
         ]);
         Auth::user()->update($validated);
 
         if ($request->is('api/*') || $request->expectsJson()) {
-            return response()->json(['message' => 'Pharmacy settings updated.']);
+            return response()->json(['message' => 'Pharmacy settings updated.', 'user' => Auth::user()->fresh()]);
         }
         return back()->with('success', 'Pharmacy settings updated successfully!');
     }

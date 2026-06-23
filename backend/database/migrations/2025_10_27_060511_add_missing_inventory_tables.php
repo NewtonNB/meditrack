@@ -100,6 +100,33 @@ return new class extends Migration
             if (!Schema::hasColumn('medicines', 'markup_percentage')) {
                 $table->decimal('markup_percentage', 5, 2)->default(20.00)->after('cost_price');
             }
+            if (!Schema::hasColumn('medicines', 'base_unit')) {
+                $table->string('base_unit')->default('tablet')->after('category');
+            }
+            if (!Schema::hasColumn('medicines', 'unit_conversions')) {
+                $table->json('unit_conversions')->nullable()->after('base_unit');
+            }
+            if (!Schema::hasColumn('medicines', 'reorder_point')) {
+                $table->integer('reorder_point')->default(0)->after('stock');
+            }
+            if (!Schema::hasColumn('medicines', 'reorder_quantity')) {
+                $table->integer('reorder_quantity')->default(0)->after('reorder_point');
+            }
+            if (!Schema::hasColumn('medicines', 'safety_stock')) {
+                $table->integer('safety_stock')->default(0)->after('reorder_quantity');
+            }
+            if (!Schema::hasColumn('medicines', 'lead_time_days')) {
+                $table->integer('lead_time_days')->default(0)->after('safety_stock');
+            }
+            if (!Schema::hasColumn('medicines', 'track_batches')) {
+                $table->boolean('track_batches')->default(false)->after('lead_time_days');
+            }
+            if (!Schema::hasColumn('medicines', 'require_expiry')) {
+                $table->boolean('require_expiry')->default(false)->after('track_batches');
+            }
+            if (!Schema::hasColumn('medicines', 'barcode')) {
+                $table->string('barcode')->nullable()->unique()->after('require_expiry');
+            }
         });
 
         // Enhance batches table if needed

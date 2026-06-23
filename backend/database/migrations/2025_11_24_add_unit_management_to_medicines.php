@@ -13,19 +13,33 @@ return new class extends Migration
     {
         Schema::table('medicines', function (Blueprint $table) {
             // Base unit information
-            $table->string('base_unit')->default('piece')->after('category'); // piece, tablet, capsule, ml, etc.
-            $table->integer('base_unit_quantity')->default(1)->after('base_unit'); // Always 1 for base unit
+            if (!Schema::hasColumn('medicines', 'base_unit')) {
+                $table->string('base_unit')->default('piece')->after('category'); // piece, tablet, capsule, ml, etc.
+            }
+            if (!Schema::hasColumn('medicines', 'base_unit_quantity')) {
+                $table->integer('base_unit_quantity')->default(1)->after('base_unit'); // Always 1 for base unit
+            }
             
             // Package information
-            $table->string('package_type')->nullable()->after('base_unit_quantity'); // strip, box, bottle, etc.
-            $table->integer('units_per_package')->nullable()->after('package_type'); // e.g., 10 tablets per strip
+            if (!Schema::hasColumn('medicines', 'package_type')) {
+                $table->string('package_type')->nullable()->after('base_unit_quantity'); // strip, box, bottle, etc.
+            }
+            if (!Schema::hasColumn('medicines', 'units_per_package')) {
+                $table->integer('units_per_package')->nullable()->after('package_type'); // e.g., 10 tablets per strip
+            }
             
             // Pricing per unit type
-            $table->decimal('price_per_piece', 10, 2)->nullable()->after('selling_price'); // Price for single piece
-            $table->decimal('price_per_package', 10, 2)->nullable()->after('price_per_piece'); // Price for package
+            if (!Schema::hasColumn('medicines', 'price_per_piece')) {
+                $table->decimal('price_per_piece', 10, 2)->nullable()->after('selling_price'); // Price for single piece
+            }
+            if (!Schema::hasColumn('medicines', 'price_per_package')) {
+                $table->decimal('price_per_package', 10, 2)->nullable()->after('price_per_piece'); // Price for package
+            }
             
             // Allow fractional sales (for liquids, etc.)
-            $table->boolean('allow_fractional')->default(false)->after('price_per_package');
+            if (!Schema::hasColumn('medicines', 'allow_fractional')) {
+                $table->boolean('allow_fractional')->default(false)->after('price_per_package');
+            }
         });
     }
 

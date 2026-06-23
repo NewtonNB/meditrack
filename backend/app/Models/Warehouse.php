@@ -35,10 +35,6 @@ class Warehouse extends Model
         return $this->hasMany(StockLevel::class);
     }
 
-    public function purchaseOrders()
-    {
-        return $this->hasMany(PurchaseOrder::class);
-    }
 
     public function stockMovements()
     {
@@ -50,10 +46,6 @@ class Warehouse extends Model
         return $this->hasMany(ReorderRule::class);
     }
 
-    public function stockAudits()
-    {
-        return $this->hasMany(StockAudit::class);
-    }
 
     // Scopes
     public function scopeActive($query)

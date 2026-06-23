@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('medicines', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('category')->nullable();
             $table->string('brand')->nullable();
             $table->string('batch_number')->nullable();
             $table->date('expiry_date')->nullable();

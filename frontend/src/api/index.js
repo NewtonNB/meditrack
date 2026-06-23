@@ -13,6 +13,7 @@ export const medicines = {
   update:           (id, data) => client.put(`/medicines/${id}`, data),
   remove:           (id)     => client.delete(`/medicines/${id}`),
   bulkDelete:       (ids)    => client.post('/medicines/bulk-delete', { ids }),
+  restore:          (id)     => client.post(`/medicines/${id}/restore`),
   export:           (params) => client.get('/medicines/export', { params, responseType: 'blob' }),
   history:          (id)     => client.get(`/medicines/${id}/history`),
   validatePricing:  (data)   => client.post('/medicines/validate-pricing', data),
@@ -23,19 +24,21 @@ export const medicines = {
 
 // ── Customers ────────────────────────────────────────────────────────────────
 export const customers = {
-  list:   (params)    => client.get('/customers', { params }),
-  create: (data)      => client.post('/customers', data),
-  update: (id, data)  => client.put(`/customers/${id}`, data),
-  remove: (id)        => client.delete(`/customers/${id}`),
+  list:       (params)   => client.get('/customers', { params }),
+  create:     (data)     => client.post('/customers', data),
+  update:     (id, data) => client.put(`/customers/${id}`, data),
+  remove:     (id)       => client.delete(`/customers/${id}`),
+  bulkDelete: (ids)      => client.post('/customers/bulk-delete', { ids }),
+  restore:    (id)       => client.post(`/customers/${id}/restore`),
 };
 
 // ── Suppliers ────────────────────────────────────────────────────────────────
 export const suppliers = {
-  list:   (params)    => client.get('/suppliers', { params }),
-  create: (data)      => client.post('/suppliers', data),
-  update: (id, data)  => client.put(`/suppliers/${id}`, data),
-  remove: (id)        => client.delete(`/suppliers/${id}`),
-};
+  list:       (params)    => client.get('/suppliers', { params }),
+  create:     (data)      => client.post('/suppliers', data),
+  update:     (id, data)  => client.put(`/suppliers/${id}`, data),
+  remove:     (id)        => client.delete(`/suppliers/${id}`),
+  bulkDelete: (ids)       => client.post('/suppliers/bulk-delete', { ids }),  restore:    (id)        => client.post(`/suppliers/${id}/restore`),};
 
 // ── Sales ────────────────────────────────────────────────────────────────────
 export const sales = {
@@ -112,6 +115,8 @@ export const users = {
   create:       (data)      => client.post('/users', data),
   update:       (id, data)  => client.put(`/users/${id}`, data),
   remove:       (id)        => client.delete(`/users/${id}`),
+  bulkDelete:   (ids)       => client.post('/users/bulk-delete', { ids }),
+  restore:      (id)        => client.post(`/users/${id}/restore`),
   uploadAvatar: (id, form)  => client.post(`/users/${id}/avatar`, form, { headers: { 'Content-Type': 'multipart/form-data' } }),
   deleteAvatar: (id)        => client.delete(`/users/${id}/avatar`),
 };

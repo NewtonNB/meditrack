@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('gateway_reference')->nullable();
             $table->json('gateway_response')->nullable(); // Store gateway response data
             $table->timestamp('paid_at')->nullable();
-            $table->timestamp('due_date');
+            $table->timestamp('due_date')->nullable();
             $table->enum('billing_cycle', ['monthly', 'yearly'])->default('monthly');
             $table->text('notes')->nullable();
             $table->string('invoice_number')->nullable();

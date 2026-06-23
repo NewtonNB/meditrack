@@ -92,24 +92,21 @@ class POSController extends Controller
     public function searchCustomers(Request $request)
     {
         $query = $request->get('q', '');
-        
-        $customers = Customer::with('customerLoyalty')
-            ->where(function ($q) use ($query) {
+
+        $customers = Customer::where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
                   ->orWhere('email', 'like', "%{$query}%")
                   ->orWhere('phone', 'like', "%{$query}%");
             })
-            ->where('is_active', true)
             ->limit(10)
             ->get()
             ->map(function ($customer) {
                 return [
-                    'id' => $customer->id,
-                    'name' => $customer->name,
-                    'email' => $customer->email,
-                    'phone' => $customer->phone,
-                    'loyalty_points' => $customer->customerLoyalty ? $customer->customerLoyalty->points_balance : 0,
-                    'tier' => $customer->customerLoyalty ? $customer->customerLoyalty->tier : 'bronze'
+                    'id'             => $customer->id,
+                    'name'           => $customer->name,
+                    'email'          => $customer->email,
+                    'phone'          => $customer->phone,
+                    'loyalty_points' => 0,
                 ];
             });
 

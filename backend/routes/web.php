@@ -147,7 +147,7 @@ Route::middleware('auth')->group(function () {
     })->middleware('permission:view_reports')->name('reports.index');
 
     // Stock Movements Routes
-    Route::get('/stock-movements', [App\Http\Controllers\InventoryController::class, 'stockMovementsIndex'])
+    Route::get('/stock-movements', [App\Http\Controllers\StockMovementController::class, 'index'])
         ->middleware('permission:manage_medicines')
         ->name('stock-movements.index');
     
@@ -379,11 +379,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/customer/{customerId}/loyalty', [App\Http\Controllers\POSController::class, 'getCustomerLoyalty'])->name('customer.loyalty');
         Route::get('/promotions', [App\Http\Controllers\POSController::class, 'getPromotions'])->name('promotions');
         Route::get('/receipt/{transactionId}', [App\Http\Controllers\POSController::class, 'printReceipt'])->name('receipt.print');
-    });
-
-    // API routes for POS
-    Route::prefix('api')->middleware('permission:process_sales')->group(function () {
-        Route::post('/sales', [SaleController::class, 'apiStore'])->name('api.sales.store');
     });
 
     // Analytics Dashboard routes

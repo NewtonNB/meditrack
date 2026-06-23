@@ -84,8 +84,8 @@ class OptimizeForDemo extends Command
             Cache::remember('dashboard_stats', 3600, function () {
                 return [
                     'total_medicines' => DB::table('medicines')->count(),
-                    'low_stock_count' => DB::table('medicines')->where('quantity', '<', 10)->count(),
-                    'total_sales' => DB::table('sales')->sum('total_amount'),
+                    'low_stock_count' => DB::table('medicines')->where('stock', '<', 10)->count(),
+                    'total_sales' => DB::table('sales')->sum('total_price'),
                     'recent_sales' => DB::table('sales')->where('created_at', '>=', now()->subDays(7))->count(),
                 ];
             });

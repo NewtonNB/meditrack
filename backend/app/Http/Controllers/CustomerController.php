@@ -23,18 +23,24 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         $user      = auth()->user();
-        $customers = Customer::with(['creator'])
-            ->where('pharmacy_id', $user->pharmacy_id ?? 1)
-            ->latest()->paginate($request->get('per_page', 15));
+        $query     = Customer::with(['creator'])
+            ->where('pharmacy_id', $user->pharmacy_id ?? 1);
+
+        if ($request->query('status') === 'trashed') {
+            $query = $query->onlyTrashed();
+        }
+
+        $customers = $query->latest()->paginate($request->get('per_page', 15));
 
         $data = [
             'customers' => $customers,
             'canManage' => $user->hasPermissionTo('manage_customers'),
             'canCreate' => $user->hasAnyPermission(['manage_customers', 'process_sales']),
+            'showingTrashed' => $request->query('status') === 'trashed',
         ];
 
         if ($request->is('api/*') || $request->expectsJson()) {
-            return response()->json(['data' => $customers]);
+            return response()->json($customers);
         }
 
         return Inertia::render('Customers', $data);
@@ -49,10 +55,12 @@ class CustomerController extends Controller
         }
 
         $validated = $request->validate([
-            'name'    => ['required', 'string', 'max:255'],
+            'name'    => ['required', 'string', 'max:255', 'unique:customers,name'],
             'email'   => ['nullable', 'email', 'max:255'],
             'phone'   => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
+        ], [
+            'name.unique' => 'A customer with this name already exists.',
         ]);
 
         $validated['pharmacy_id'] = $user->pharmacy_id ?? 1;
@@ -75,10 +83,12 @@ class CustomerController extends Controller
         }
 
         $validated = $request->validate([
-            'name'    => ['required', 'string', 'max:255'],
+            'name'    => ['required', 'string', 'max:255', 'unique:customers,name,' . $customer->id],
             'email'   => ['nullable', 'email', 'max:255'],
             'phone'   => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
+        ], [
+            'name.unique' => 'Another customer is already using this name.',
         ]);
 
         $customer->update($validated);
@@ -97,20 +107,51 @@ class CustomerController extends Controller
                 ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
 
-        if ($customer->sales()->exists()) {
-            $msg = 'Cannot delete customer with existing sales records.';
-            return $request->is('api/*') || $request->expectsJson()
-                ? response()->json(['message' => $msg], 422)
-                : back()->withErrors(['customer' => $msg]);
-        }
-
         $customer->delete();
 
         if ($request->is('api/*') || $request->expectsJson()) {
-            return response()->json(['message' => 'Customer deleted.']);
+            return response()->json(['message' => 'Customer moved to trash.']);
         }
 
-        return back()->with('success', 'Customer deleted.');
+        return back()->with('success', 'Customer moved to trash.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        if (!auth()->user()->hasPermissionTo('manage_customers')) {
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
+        }
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', 'exists:customers,id'],
+        ]);
+
+        Customer::whereIn('id', $validated['ids'])->where('pharmacy_id', auth()->user()->pharmacy_id ?? 1)->delete();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Selected customers moved to trash.']);
+        }
+
+        return back()->with('success', 'Selected customers moved to trash.');
+    }
+
+    public function restore(Request $request, $id)
+    {
+        if (!auth()->user()->hasPermissionTo('manage_customers')) {
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
+        }
+
+        $customer = Customer::onlyTrashed()->findOrFail($id);
+        $customer->restore();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Customer restored.']);
+        }
+
+        return back()->with('success', 'Customer restored.');
     }
 
     public function create()

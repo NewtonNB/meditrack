@@ -26,6 +26,12 @@ class MedicineController extends Controller
         $user = auth()->user();
         $query = Medicine::with(['supplier']);
 
+        if ($request->query('status') === 'trashed') {
+            $query = $query->onlyTrashed();
+        } elseif ($request->query('status') === 'all') {
+            $query = $query->withTrashed();
+        }
+
         if ($user->isCashier()) {
             $query->select(['id', 'name', 'brand', 'selling_price', 'stock', 'supplier_id', 'expiry_date', 'category', 'reorder_level', 'created_at']);
         }
@@ -87,7 +93,7 @@ class MedicineController extends Controller
             'batch_number'  => ['nullable', 'string', 'max:255'],
             'expiry_date'   => ['nullable', 'date'],
             'cost_price'    => ['required', 'numeric', 'min:0'],
-            'selling_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:' . ($request->cost_price ?? 0)],
             'stock'         => ['required', 'integer', 'min:0'],
             'supplier_id'   => ['nullable', 'exists:suppliers,id'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
@@ -119,7 +125,7 @@ class MedicineController extends Controller
             'batch_number' => ['nullable', 'string', 'max:255'],
             'expiry_date' => ['nullable', 'date'],
             'cost_price' => ['required', 'numeric', 'min:0'],
-            'selling_price' => ['required', 'numeric', 'min:0'],
+            'selling_price' => ['required', 'numeric', 'min:' . ($request->cost_price ?? 0)],
             'stock' => ['required', 'integer', 'min:0'],
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
@@ -134,20 +140,45 @@ class MedicineController extends Controller
         return back()->with('success', 'Medicine updated.');
     }
 
-    public function destroy(Request $request, Medicine $medicine)
+    public function destroy(Request $request, $id)
     {
         if (!auth()->user()->hasPermissionTo('manage_medicines')) {
             return $request->expectsJson() || $request->is('api/*')
                 ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
         }
 
-        $medicine->delete();
+        $medicine = Medicine::withTrashed()->findOrFail($id);
 
-        if ($request->is('api/*') || $request->expectsJson()) {
-            return response()->json(['message' => 'Medicine deleted.']);
+        if ($medicine->trashed()) {
+            $medicine->forceDelete();
+            $message = 'Medicine deleted permanently.';
+        } else {
+            $medicine->delete();
+            $message = 'Medicine deleted.';
         }
 
-        return back()->with('success', 'Medicine deleted.');
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    public function restore(Request $request, $id)
+    {
+        if (!auth()->user()->hasPermissionTo('manage_medicines')) {
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['message' => 'Forbidden.'], 403) : abort(403);
+        }
+
+        $medicine = Medicine::onlyTrashed()->findOrFail($id);
+        $medicine->restore();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'Medicine restored.']);
+        }
+
+        return back()->with('success', 'Medicine restored.');
     }
 
     public function history(Request $request, Medicine $medicine)

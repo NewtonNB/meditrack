@@ -1,9 +1,18 @@
-﻿import { useApi } from '../hooks/useApi';
+﻿import { useState } from 'react';
+import { useApi, getListItems } from '../hooks/useApi';
 import { stockMovements as api } from '../api';
+import { useNavigate } from 'react-router-dom';
+import PermissionGate from '../Components/PermissionGate';
 
 export default function StockMovements() {
-  const { data, loading, error } = useApi(() => api.list());
-  const items = data?.data ?? data ?? [];
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(15);
+  const { data, loading, error } = useApi(() => api.list({ page, per_page: perPage }), [page, perPage]);
+  const items = getListItems(data);
+  const total = data?.total ?? items.length;
+  const currentPage = data?.current_page ?? 1;
+  const lastPage = data?.last_page ?? 1;
 
   if (loading) return <div className="flex items-center justify-center h-64 text-gray-400">Loading stock movements…</div>;
   if (error)   return <div className="text-red-500 p-4">{error}</div>;
@@ -12,11 +21,20 @@ export default function StockMovements() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Stock Movements</h1>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          <i className="bi bi-plus mr-2" />Add Movement
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+            <i className="bi bi-arrow-left" /> Back
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Stock Movements</h1>
+          </div>
+        </div>
+        <PermissionGate permission="manage_medicines">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            <i className="bi bi-plus mr-2" />Add Movement
+          </button>
+        </PermissionGate>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
@@ -44,6 +62,17 @@ export default function StockMovements() {
             ))}
           </tbody>
         </table>
+        {items.length > 0 && (
+          <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-400 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              Page {currentPage} of {lastPage} · {total} total movement{total !== 1 ? 's' : ''}
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setPage(p => Math.max(1, p-1))} disabled={currentPage <= 1} className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">Previous</button>
+              <button type="button" onClick={() => setPage(p => Math.min(lastPage, p+1))} disabled={currentPage >= lastPage} className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">Next</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

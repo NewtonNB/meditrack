@@ -72,7 +72,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth management
     Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy']);
     Route::get('/auth/me', function (Request $request) {
-        return response()->json(['user' => $request->user()->load('pharmacy')]);
+        $user = $request->user()->load('pharmacy');
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'pharmacy_id' => $user->pharmacy_id,
+                'avatar' => $user->avatar,
+                'pharmacy' => $user->pharmacy,
+                'permissions' => $user->getPermissionsViaRoles()->pluck('name')->toArray(),
+                'roles' => $user->getRoleNames()->toArray(),
+            ],
+        ]);
     });
 
     // ── Dashboard ──────────────────────────────────────────────────────────
@@ -92,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/{medicine}', [MedicineController::class, 'update']);
             Route::delete('/{medicine}', [MedicineController::class, 'destroy']);
             Route::post('/bulk-delete', [MedicineController::class, 'bulkDelete']);
+            Route::post('/{medicine}/restore', [MedicineController::class, 'restore']);
             Route::post('/validate-pricing', [MedicineController::class, 'validatePricing']);
             Route::post('/update-pricing', [MedicineController::class, 'updatePricing']);
             Route::get('/{medicine}/history', [MedicineController::class, 'history']);
@@ -105,6 +119,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [CustomerController::class, 'store']);
             Route::put('/{customer}', [CustomerController::class, 'update']);
             Route::delete('/{customer}', [CustomerController::class, 'destroy']);
+            Route::post('/bulk-delete', [CustomerController::class, 'bulkDelete']);
+            Route::post('/{customer}/restore', [CustomerController::class, 'restore']);
         });
     });
 
@@ -114,6 +130,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [SupplierController::class, 'store']);
         Route::put('/{supplier}', [SupplierController::class, 'update']);
         Route::delete('/{supplier}', [SupplierController::class, 'destroy']);
+        Route::post('/bulk-delete', [SupplierController::class, 'bulkDelete']);
+        Route::post('/{supplier}/restore', [SupplierController::class, 'restore']);
     });
 
     // ── Sales ──────────────────────────────────────────────────────────────
@@ -191,6 +209,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [UserManagementController::class, 'store']);
         Route::put('/{user}', [UserManagementController::class, 'update']);
         Route::delete('/{user}', [UserManagementController::class, 'destroy']);
+        Route::post('/bulk-delete', [UserManagementController::class, 'bulkDelete']);
+        Route::post('/{user}/restore', [UserManagementController::class, 'restore']);
         Route::post('/{user}/avatar', [UserManagementController::class, 'uploadAvatar']);
         Route::delete('/{user}/avatar', [UserManagementController::class, 'deleteAvatar']);
     });
@@ -216,10 +236,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Stock Movements ────────────────────────────────────────────────────
     Route::prefix('stock-movements')->name('api.stock-movements.')->middleware('permission:manage_medicines')->group(function () {
-        Route::get('/', [InventoryController::class, 'stockMovementsIndex']);
-        Route::post('/', [InventoryController::class, 'storeStockMovement']);
-        Route::put('/{stockMovement}', [InventoryController::class, 'updateStockMovement']);
-        Route::post('/adjustment', [InventoryController::class, 'storeStockAdjustment']);
+        Route::get('/', [App\Http\Controllers\StockMovementController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\StockMovementController::class, 'store']);
+        Route::put('/{stockMovement}', [App\Http\Controllers\StockMovementController::class, 'update']);
+        Route::post('/adjustment', [App\Http\Controllers\StockMovementController::class, 'storeAdjustment']);
     });
 
     // ── POS ────────────────────────────────────────────────────────────────

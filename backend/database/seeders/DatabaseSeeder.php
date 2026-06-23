@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
 			['email' => 'admin@mediTrack.com'],
 			[
 				'name' => 'Super Admin',
-				'password' => bcrypt('password'),
+				'password' => bcrypt('1234'),
 				'role' => 'super_admin',
 				'pharmacy_id' => null,
 			]
@@ -53,7 +53,7 @@ class DatabaseSeeder extends Seeder
 			['email' => 'tukamuhebwanewton@gmail.com'],
 			[
 				'name' => 'Pharmacy Admin',
-				'password' => bcrypt('password'),
+				'password' => bcrypt('1234'),
 				'role' => 'pharmacy_admin',
 				'pharmacy_id' => $pharmacy->id,
 			]
@@ -65,7 +65,7 @@ class DatabaseSeeder extends Seeder
 			['email' => 'pharmacist@demo.com'],
 			[
 				'name' => 'John Pharmacist',
-				'password' => bcrypt('password'),
+				'password' => bcrypt('1234'),
 				'role' => 'pharmacist',
 				'pharmacy_id' => $pharmacy->id,
 			]
@@ -76,7 +76,7 @@ class DatabaseSeeder extends Seeder
 			['email' => 'cashier@demo.com'],
 			[
 				'name' => 'Jane Cashier',
-				'password' => bcrypt('password'),
+				'password' => bcrypt('1234'),
 				'role' => 'cashier',
 				'pharmacy_id' => $pharmacy->id,
 			]

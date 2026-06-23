@@ -73,6 +73,11 @@ class Sale extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) ($this->total_price ?? 0);
+    }
 }
 
 

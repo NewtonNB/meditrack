@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Services\AutomationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class AutomationController extends Controller
 {
@@ -19,26 +18,32 @@ class AutomationController extends Controller
     /**
      * Display the automation dashboard
      */
-    public function dashboard(): Response
+    public function dashboard(Request $request)
     {
         $summary = $this->automationService->getDashboardSummary();
         $recentSuggestions = $this->automationService->getReorderSuggestions()->take(5);
 
-        return Inertia::render('Automation/Dashboard', [
+        $data = [
             'summary' => $summary,
             'recentSuggestions' => $recentSuggestions,
-        ]);
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Automation/Dashboard', $data);
     }
 
     /**
      * Display reorder suggestions
      */
-    public function reorderSuggestions(): Response
+    public function reorderSuggestions(Request $request)
     {
         $suggestions = $this->automationService->getReorderSuggestions();
 
-        return Inertia::render('Automation/ReorderSuggestions', [
-            'suggestions' => $suggestions,
+        $data = [
+            'data' => $suggestions,
             'summary' => [
                 'total' => $suggestions->count(),
                 'critical' => $suggestions->where('urgency_level', 'critical')->count(),
@@ -46,7 +51,16 @@ class AutomationController extends Controller
                 'medium' => $suggestions->where('urgency_level', 'medium')->count(),
                 'low' => $suggestions->where('urgency_level', 'low')->count(),
                 'total_estimated_cost' => $suggestions->sum('estimated_cost'),
-            ]
+            ],
+        ];
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Automation/ReorderSuggestions', [
+            'suggestions' => $suggestions,
+            'summary' => $data['summary'],
         ]);
     }
 

@@ -51,17 +51,17 @@ class SystemOverviewController extends Controller
             (($totalSales - $lastMonthSales) / $lastMonthSales) * 100 : 0;
 
         // Total revenue
-        $totalRevenue = Sale::sum('total_amount') ?? 0;
-        $lastMonthRevenue = Sale::where('created_at', '<', $currentMonth)->sum('total_amount') ?? 0;
+        $totalRevenue = Sale::sum('total_price') ?? 0;
+        $lastMonthRevenue = Sale::where('created_at', '<', $currentMonth)->sum('total_price') ?? 0;
         $revenueGrowth = $lastMonthRevenue > 0 ? 
             (($totalRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100 : 0;
 
         // Additional metrics
-        $lowStockMedicines = Medicine::where('quantity', '<=', 10)->count();
+        $lowStockMedicines = Medicine::where('stock', '<=', 10)->count();
         $newCustomersThisMonth = Customer::where('created_at', '>=', $currentMonth)->count();
         $activeSuppliers = Supplier::count();
         $todaySales = Sale::whereDate('created_at', today())->count();
-        $todayRevenue = Sale::whereDate('created_at', today())->sum('total_amount') ?? 0;
+        $todayRevenue = Sale::whereDate('created_at', today())->sum('total_price') ?? 0;
 
         return [
             'totalMedicines' => $totalMedicines,
@@ -86,7 +86,7 @@ class SystemOverviewController extends Controller
         $healthScore = 100;
         
         // Check for low stock medicines
-        $lowStockCount = Medicine::where('quantity', '<=', 10)->count();
+        $lowStockCount = Medicine::where('stock', '<=', 10)->count();
         $totalMedicines = Medicine::count();
         
         if ($totalMedicines > 0) {

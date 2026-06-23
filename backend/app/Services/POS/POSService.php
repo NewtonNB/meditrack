@@ -57,7 +57,7 @@ class POSService
                 'subtotal' => $calculations['subtotal'],
                 'discount_amount' => $calculations['discount_amount'],
                 'tax_amount' => $calculations['tax_amount'],
-                'total_amount' => $calculations['total_amount'],
+                'total_price' => $calculations['total_amount'],
                 'total_cost' => $calculations['total_cost'],
                 'profit_margin' => $calculations['profit_margin'],
                 'loyalty_points_earned' => $calculations['loyalty_points_earned'],
@@ -136,7 +136,7 @@ class POSService
             }
 
             // Verify total payment amount
-            if (abs($totalPaid - $sale->total_amount) > 0.01) {
+            if (abs($totalPaid - $sale->total_price) > 0.01) {
                 throw new \Exception('Payment amount does not match transaction total');
             }
 
@@ -290,9 +290,9 @@ class POSService
             'date' => $date,
             'terminal_id' => $terminalId,
             'total_transactions' => $sales->count(),
-            'total_revenue' => $sales->sum('total_amount'),
-            'total_profit' => $sales->sum('total_amount') - $sales->sum('total_cost'),
-            'average_transaction' => $sales->count() > 0 ? $sales->avg('total_amount') : 0,
+            'total_revenue' => $sales->sum('total_price'),
+            'total_profit' => $sales->sum('total_price') - $sales->sum('total_cost'),
+            'average_transaction' => $sales->count() > 0 ? $sales->avg('total_price') : 0,
             'payment_methods' => $this->getPaymentMethodBreakdown($sales),
             'top_selling_items' => $this->getTopSellingItems($date, $terminalId),
             'hourly_breakdown' => $this->getHourlyBreakdown($sales)
@@ -369,7 +369,7 @@ class POSService
         foreach ($sales as $sale) {
             $hour = $sale->created_at->hour;
             $breakdown[$hour]['transactions']++;
-            $breakdown[$hour]['revenue'] += $sale->total_amount;
+            $breakdown[$hour]['revenue'] += $sale->total_price;
         }
         
         return array_values($breakdown);

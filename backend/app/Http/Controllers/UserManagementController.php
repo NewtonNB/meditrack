@@ -29,7 +29,13 @@ class UserManagementController extends Controller
     public function index(Request $request): InertiaResponse|JsonResponse
     {
         $user  = auth()->user();
-        $query = User::select(['id','name','email','role','pharmacy_id','is_active','last_login_at','created_at']);
+        $query = User::select(['id','name','email','role','pharmacy_id','last_login_at','created_at']);
+
+        if ($request->query('status') === 'trashed') {
+            $query = $query->onlyTrashed();
+        } elseif ($request->query('status') === 'all') {
+            $query = $query->withTrashed();
+        }
 
         if (!$user->isSuperAdmin()) {
             $query->where('pharmacy_id', $user->pharmacy_id);
@@ -162,6 +168,60 @@ class UserManagementController extends Controller
         }
 
         return back()->with('success', 'User deleted successfully.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $currentUser = auth()->user();
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $deletedCount = 0;
+        $skippedCount = 0;
+
+        $users = User::whereIn('id', $validated['ids'])->get();
+        foreach ($users as $user) {
+            if ($user->id === $currentUser->id || !$this->canManageUser($currentUser, $user)) {
+                $skippedCount++;
+                continue;
+            }
+
+            $user->delete();
+            $deletedCount++;
+        }
+
+        $message = "{$deletedCount} user(s) deleted.";
+        if ($skippedCount > 0) {
+            $message .= " {$skippedCount} user(s) skipped due to permission restrictions or self-delete.";
+        }
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => $message, 'deleted' => $deletedCount, 'skipped' => $skippedCount]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    public function restore(Request $request, $id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $currentUser = auth()->user();
+
+        if ($user->id === $currentUser->id || !$this->canManageUser($currentUser, $user)) {
+            return $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => 'Forbidden.'], 403)
+                : abort(403);
+        }
+
+        $user->restore();
+
+        if ($request->is('api/*') || $request->expectsJson()) {
+            return response()->json(['message' => 'User restored.' ]);
+        }
+
+        return back()->with('success', 'User restored.');
     }
 
     /**

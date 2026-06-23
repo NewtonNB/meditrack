@@ -1,10 +1,12 @@
-﻿import { useApi } from '../hooks/useApi';
+﻿import { useNavigate } from 'react-router-dom';
+import { useApi } from '../hooks/useApi';
 import { notifications as api } from '../api';
 import { toast } from 'react-toastify';
 
 const priorityColors = { high: 'border-red-400 bg-red-50', medium: 'border-yellow-400 bg-yellow-50', low: 'border-blue-400 bg-blue-50' };
 
 export default function Notifications() {
+  const navigate = useNavigate();
   const { data, loading, error, refetch } = useApi(() => api.list());
   const items = data?.notifications ?? data?.data ?? data ?? [];
 
@@ -23,9 +25,14 @@ export default function Notifications() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-        <button onClick={markAllRead} className="text-sm text-blue-600 hover:underline">Mark all as read</button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+            <i className="bi bi-arrow-left" /> Back
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+        </div>
+        <button type="button" onClick={markAllRead} className="text-sm text-blue-600 hover:underline">Mark all as read</button>
       </div>
 
       {items.length === 0 ? (

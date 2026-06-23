@@ -29,7 +29,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Legacy api-json group (kept for backward compatibility)
         $middleware->group('api-json', [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);

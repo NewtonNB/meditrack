@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::table('medicines', function (Blueprint $table) {
             $table->integer('min_order_quantity')->nullable()->default(10)->after('reorder_level');
-            $table->string('category')->nullable()->after('min_order_quantity');
-            $table->boolean('is_prescription')->default(false)->after('category');
+            $table->boolean('is_prescription')->default(false)->after('min_order_quantity');
             $table->string('code')->nullable()->after('name');
             $table->decimal('purchase_price', 10, 2)->nullable()->after('cost_price');
             $table->integer('current_stock')->nullable()->after('stock');
@@ -29,7 +28,6 @@ return new class extends Migration
         Schema::table('medicines', function (Blueprint $table) {
             $table->dropColumn([
                 'min_order_quantity',
-                'category', 
                 'is_prescription',
                 'code',
                 'purchase_price',

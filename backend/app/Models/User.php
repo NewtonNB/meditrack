@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, Auditable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, Auditable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -27,6 +28,7 @@ class User extends Authenticatable
         'password',
         'pharmacy_id',
         'role',
+        'is_active',
         'phone',
         'address',
         'bio',
@@ -37,6 +39,37 @@ class User extends Authenticatable
         'login_count',
         'created_by',
         'updated_by',
+        'timezone',
+        'language',
+        'pharmacy_name',
+        'pharmacy_address',
+        'pharmacy_phone',
+        'pharmacy_email',
+        'license_number',
+        'tax_rate',
+        'currency',
+        'receipt_footer',
+        'email_notifications',
+        'sms_notifications',
+        'push_notifications',
+        'low_stock_alerts',
+        'expiry_alerts',
+        'sales_reports',
+        'system_updates',
+        'marketing_emails',
+        'two_factor_enabled',
+        'session_timeout',
+        'password_expiry',
+        'login_attempts',
+        'require_password_change',
+        'auto_backup',
+        'backup_frequency',
+        'data_retention',
+        'maintenance_mode',
+        'debug_mode',
+        'cache_enabled',
+        'bank_accounts',
+        'payment_gateways',
     ];
 
     /**

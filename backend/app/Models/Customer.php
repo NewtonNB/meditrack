@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\TenantScope;
 use App\Traits\Auditable;
 use App\Traits\TracksActivity;
 
 class Customer extends Model
 {
-    use HasFactory, TenantScope, Auditable, TracksActivity;
+    use HasFactory, SoftDeletes, TenantScope, Auditable, TracksActivity;
 
     protected $fillable = [
         'name',
