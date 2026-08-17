@@ -125,21 +125,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/destroy', [ProfileController::class, 'destroy'])->name('destroy');
     });
 
-    // Smart Automation routes
-    Route::prefix('automation')->name('automation.')->group(function () {
-        // Basic automation data - accessible to all authenticated users
-        Route::get('/data', [AutomationController::class, 'getAutomationData'])->name('data');
-        Route::get('/quick-insights', [AutomationController::class, 'getQuickInsights'])->name('quick-insights');
-        
-        // Advanced automation features - require view_reports permission
-        Route::middleware('permission:view_reports')->group(function () {
-            Route::get('/dashboard', [AutomationController::class, 'dashboard'])->name('dashboard');
-            Route::get('/reorder-suggestions', [AutomationController::class, 'reorderSuggestions'])->name('reorder-suggestions');
-            Route::post('/reorder/{medicine}/action', [AutomationController::class, 'markReorderActioned'])->name('reorder.action');
-            Route::post('/expiry/{medicine}/action', [AutomationController::class, 'markExpiryHandled'])->name('expiry.action');
-            Route::post('/generate-po/{medicine}', [AutomationController::class, 'generatePurchaseOrder'])->name('generate-po');
-        });
-    });
+    // Smart Automation routes are handled by routes/api.php under auth:sanctum.
+    // Do NOT duplicate here — web.php uses session auth which conflicts with Bearer token auth.
 
     // Placeholder routes for new sidebar links
     Route::get('/reports', function () {
@@ -291,40 +278,8 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 require __DIR__.'/superadmin.php';
 
-// API Routes (JSON responses only)
-Route::prefix('api')->middleware(['api-json', 'auth'])->group(function () {
-    // Notification API routes (separate from Inertia routes)
-    Route::prefix('notifications')->name('api.notifications.')->group(function () {
-        Route::get('/', [App\Http\Controllers\NotificationController::class, 'index'])->name('index');
-        Route::get('/unread-count', [App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('unread.count');
-        Route::get('/statistics', [App\Http\Controllers\NotificationController::class, 'statistics'])->name('statistics');
-        Route::get('/debug', [App\Http\Controllers\NotificationController::class, 'debugSystem'])->name('debug');
-        Route::get('/preferences', [App\Http\Controllers\NotificationController::class, 'getPreferences'])->name('preferences.get');
-        Route::post('/preferences', [App\Http\Controllers\NotificationController::class, 'updatePreferences'])->name('preferences.update');
-    });
-
-    // System stats
-    Route::get('/system-stats', [App\Http\Controllers\SystemOverviewController::class, 'getStats'])->name('api.system.stats');
-    
-    // Purchases API
-    Route::post('/purchases', [PurchaseController::class, 'store'])->name('api.purchases.store');
-    
-    // Stock movements API
-    Route::post('/stock-movements', [App\Http\Controllers\InventoryController::class, 'storeStockMovement'])->name('api.stock-movements.store');
-    
-    // Search API
-    Route::prefix('search')->name('api.search.')->group(function () {
-        Route::post('/global', [App\Http\Controllers\SearchController::class, 'globalSearch'])->name('global');
-        Route::post('/medicines', [App\Http\Controllers\SearchController::class, 'searchMedicines'])->name('medicines');
-        Route::post('/customers', [App\Http\Controllers\SearchController::class, 'searchCustomers'])->name('customers');
-        Route::post('/sales', [App\Http\Controllers\SearchController::class, 'searchSales'])->name('sales');
-        Route::post('/suppliers', [App\Http\Controllers\SearchController::class, 'searchSuppliers'])->name('suppliers');
-        Route::post('/purchases', [App\Http\Controllers\SearchController::class, 'searchPurchases'])->name('purchases');
-        Route::get('/suggestions', [App\Http\Controllers\SearchController::class, 'suggestions'])->name('suggestions');
-        Route::get('/filter-options', [App\Http\Controllers\SearchController::class, 'filterOptions'])->name('filter.options');
-        Route::get('/statistics', [App\Http\Controllers\SearchController::class, 'statistics'])->name('statistics');
-    });
-});
+// NOTE: All /api/* routes are handled by routes/api.php with auth:sanctum.
+// Do NOT duplicate them here — web.php uses session auth which breaks Bearer token authentication.
 
 
 

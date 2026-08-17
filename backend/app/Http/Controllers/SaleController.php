@@ -94,7 +94,7 @@ class SaleController extends Controller
             'customer_phone' => ['nullable', 'string', 'max:20'],
             'quantity' => ['required', 'integer', 'min:1', 'max:10000'],
             'unit_price' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['required', 'string', 'in:cash,mobile_money,card,credit'],
+            'payment_method' => ['required', 'string', 'in:cash,mobile_money,card,credit,insurance'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 

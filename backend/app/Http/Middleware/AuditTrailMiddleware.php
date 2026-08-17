@@ -226,9 +226,9 @@ class AuditTrailMiddleware
         $segments = explode('/', trim($path, '/'));
         
         // Remove common prefixes
-        $segments = array_filter($segments, function($segment) {
+        $segments = array_values(array_filter($segments, function($segment) {
             return !in_array($segment, ['api', 'v1', 'admin']);
-        });
+        }));
 
         if (empty($segments)) {
             return 'homepage';

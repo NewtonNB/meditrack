@@ -1,9 +1,45 @@
 import { useState, useEffect } from 'react';
 import Modal from './Modal';
-import { medicines as api, suppliers as suppliersApi } from '../api';
+import { medicines as api, suppliers as suppliersApi, medicineCategories as categoriesApi, medicineNames as namesApi, medicineBrands as brandsApi } from '../api';
 import { toast } from 'react-toastify';
 
-const CATEGORIES = ['Tablets', 'Capsules', 'Syrup', 'Injection', 'Ointment', 'Drops', 'Inhaler', 'Suppository', 'Other'];
+// Fallback categories if API fails
+const FALLBACK_CATEGORIES = [
+  { id: 1, name: 'Tablets' },
+  { id: 2, name: 'Capsules' },
+  { id: 3, name: 'Syrup' },
+  { id: 4, name: 'Injection' },
+  { id: 5, name: 'Ointment' },
+  { id: 6, name: 'Drops' },
+  { id: 7, name: 'Inhaler' },
+  { id: 8, name: 'Suppository' },
+  { id: 9, name: 'Other' },
+];
+
+// Fallback medicine names if API fails
+const FALLBACK_NAMES = [
+  { id: 1, name: 'Paracetamol', generic_name: 'Acetaminophen' },
+  { id: 2, name: 'Ibuprofen', generic_name: 'Ibuprofen' },
+  { id: 3, name: 'Amoxicillin', generic_name: 'Amoxicillin' },
+  { id: 4, name: 'Ciprofloxacin', generic_name: 'Ciprofloxacin' },
+  { id: 5, name: 'Metformin', generic_name: 'Metformin' },
+  { id: 6, name: 'Omeprazole', generic_name: 'Omeprazole' },
+  { id: 7, name: 'Aspirin', generic_name: 'Acetylsalicylic Acid' },
+  { id: 8, name: 'Cetirizine', generic_name: 'Cetirizine' },
+];
+
+// Fallback brands if API fails
+const FALLBACK_BRANDS = [
+  { id: 1, name: 'Panadol', manufacturer: 'GSK' },
+  { id: 2, name: 'Nurofen', manufacturer: 'Reckitt Benckiser' },
+  { id: 3, name: 'Augmentin', manufacturer: 'GSK' },
+  { id: 4, name: 'Cipro', manufacturer: 'Bayer' },
+  { id: 5, name: 'Glucophage', manufacturer: 'Merck' },
+  { id: 6, name: 'Losec', manufacturer: 'AstraZeneca' },
+  { id: 7, name: 'Bayer', manufacturer: 'Bayer' },
+  { id: 8, name: 'Zyrtec', manufacturer: 'UCB' },
+  { id: 9, name: 'Generic', manufacturer: 'Various' },
+];
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -19,6 +55,9 @@ export default function MedicineModal({ isOpen, onClose, medicine, onSave }) {
     supplier_id: '',
   });
   const [suppliers, setSuppliers] = useState([]);
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
+  const [medicineNames, setMedicineNames] = useState(FALLBACK_NAMES);
+  const [medicineBrands, setMedicineBrands] = useState(FALLBACK_BRANDS);
   const [loading, setLoading]     = useState(false);
   const [errors, setErrors]       = useState({});
 
@@ -41,12 +80,37 @@ export default function MedicineModal({ isOpen, onClose, medicine, onSave }) {
     setErrors({});
   }, [medicine, isOpen]);
 
-  // ── Load suppliers ────────────────────────────────────────────────────────
+  // ── Load suppliers & categories & names & brands ──────────────────────────
   useEffect(() => {
     if (!isOpen) return;
+    
     suppliersApi.list()
       .then(res => setSuppliers(Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : [])))
-      .catch(() => toast.error('Failed to load suppliers.'));
+      .catch((err) => {
+        console.error('Failed to load suppliers:', err);
+        toast.error('Failed to load suppliers.');
+      });
+    
+    categoriesApi.list({ active_only: true })
+      .then(res => {
+        const cats = Array.isArray(res.data) ? res.data : [];
+        if (cats.length > 0) setCategories(cats);
+      })
+      .catch((err) => console.error('Failed to load categories:', err));
+
+    namesApi.list({ active_only: true })
+      .then(res => {
+        const names = Array.isArray(res.data) ? res.data : [];
+        if (names.length > 0) setMedicineNames(names);
+      })
+      .catch((err) => console.error('Failed to load medicine names:', err));
+
+    brandsApi.list({ active_only: true })
+      .then(res => {
+        const brands = Array.isArray(res.data) ? res.data : [];
+        if (brands.length > 0) setMedicineBrands(brands);
+      })
+      .catch((err) => console.error('Failed to load brands:', err));
   }, [isOpen]);
 
   // ── Validation ────────────────────────────────────────────────────────────
@@ -171,14 +235,20 @@ export default function MedicineModal({ isOpen, onClose, medicine, onSave }) {
           {/* Name — full width */}
           <div className="col-span-2">
             <Label text="Medicine Name" required />
-            <input type="text" placeholder="e.g. Paracetamol 500mg" {...field('name')} />
+            <select {...field('name')}>
+              <option value="">Select medicine name…</option>
+              {medicineNames.map(n => <option key={n.id} value={n.name}>{n.name} {n.generic_name ? `(${n.generic_name})` : ''}</option>)}
+            </select>
             <FieldError k="name" />
           </div>
 
           {/* Brand */}
           <div>
             <Label text="Brand" required />
-            <input type="text" placeholder="e.g. Panadol" {...field('brand')} />
+            <select {...field('brand')}>
+              <option value="">Select brand…</option>
+              {medicineBrands.map(b => <option key={b.id} value={b.name}>{b.name} {b.manufacturer ? `- ${b.manufacturer}` : ''}</option>)}
+            </select>
             <FieldError k="brand" />
           </div>
 
@@ -187,7 +257,7 @@ export default function MedicineModal({ isOpen, onClose, medicine, onSave }) {
             <Label text="Category" required />
             <select {...field('category')}>
               <option value="">Select category…</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </select>
             <FieldError k="category" />
           </div>

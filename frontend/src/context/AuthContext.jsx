@@ -11,42 +11,36 @@ export function AuthProvider({ children }) {
 
   // Rehydrate from localStorage on mount
   useEffect(() => {
-    const token    = localStorage.getItem('auth_token');
-    const cached   = localStorage.getItem('auth_user');
-    const cachedPerms = localStorage.getItem('auth_permissions');
-    const cachedRoles = localStorage.getItem('auth_roles');
-    
-    if (token && cached) {
-      try {
-        setUser(JSON.parse(cached));
-        if (cachedPerms) setPermissions(JSON.parse(cachedPerms));
-        if (cachedRoles) setRoles(JSON.parse(cachedRoles));
-      } catch (_) {}
-    }
-    if (token) {
-      // Verify token is still valid
-      getMe()
-        .then(({ data }) => {
-          setUser(data.user);
-          setPermissions(data.user.permissions || []);
-          setRoles(data.user.roles || []);
-          localStorage.setItem('auth_user', JSON.stringify(data.user));
-          localStorage.setItem('auth_permissions', JSON.stringify(data.user.permissions || []));
-          localStorage.setItem('auth_roles', JSON.stringify(data.user.roles || []));
-        })
-        .catch(() => {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
-          localStorage.removeItem('auth_permissions');
-          localStorage.removeItem('auth_roles');
-          setUser(null);
-          setPermissions([]);
-          setRoles([]);
-        })
-        .finally(() => setLoading(false));
-    } else {
+    const token = localStorage.getItem('auth_token');
+
+    if (!token) {
       setLoading(false);
+      return;
     }
+
+    // Verify token is still valid before marking user authenticated.
+    getMe()
+      .then(({ data }) => {
+        setUser(data.user);
+        setPermissions(data.user.permissions || []);
+        setRoles(data.user.roles || []);
+        localStorage.setItem('auth_user', JSON.stringify(data.user));
+        localStorage.setItem('auth_permissions', JSON.stringify(data.user.permissions || []));
+        localStorage.setItem('auth_roles', JSON.stringify(data.user.roles || []));
+      })
+      .catch((err) => {
+        // Only clear the token if the server explicitly rejected it (401).
+        // For ALL other errors (network down, 5xx), clear the session —
+        // we cannot trust a token we haven't been able to verify.
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_permissions');
+        localStorage.removeItem('auth_roles');
+        setUser(null);
+        setPermissions([]);
+        setRoles([]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (credentials) => {
@@ -72,6 +66,23 @@ export function AuthProvider({ children }) {
     setRoles([]);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const { data } = await getMe();
+    const user = data.user;
+    setUser(user);
+    setPermissions(user.permissions || []);
+    setRoles(user.roles || []);
+    localStorage.setItem('auth_user', JSON.stringify(user));
+    localStorage.setItem('auth_permissions', JSON.stringify(user.permissions || []));
+    localStorage.setItem('auth_roles', JSON.stringify(user.roles || []));
+    return user;
+  }, []);
+
+  const updateAuthUser = useCallback((updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+  }, []);
+
   const isRole = (...roles) => roles.includes(user?.role);
   const isSuperAdmin    = () => isRole('super_admin');
   const isPharmacyAdmin = () => isRole('pharmacy_admin');
@@ -91,6 +102,8 @@ export function AuthProvider({ children }) {
         loading, 
         login, 
         logout, 
+        refreshUser,
+        updateAuthUser,
         isRole, 
         isSuperAdmin, 
         isPharmacyAdmin, 

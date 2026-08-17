@@ -57,13 +57,10 @@ class StockMovementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'medicine_id' => 'required|exists:medicines,id',
-            'movement_type' => 'required|in:in,out,adjustment,expired',
+            'movement_type' => 'required|in:in,out,adjustment,expired,transfer,damaged',
             'quantity' => 'required|integer|min:1',
-            'unit_cost' => 'nullable|numeric|min:0',
             'reference' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
-            'batch_number' => 'nullable|string|max:255',
-            'expiry_date' => 'nullable|date|after:today',
             'warehouse_id' => 'nullable|exists:warehouses,id',
         ]);
 
@@ -76,15 +73,27 @@ class StockMovementController extends Controller
 
         try {
             $movement = StockMovement::create([
-                'medicine_id'   => $request->medicine_id,
-                'warehouse_id'  => $request->warehouse_id ?? 1,
-                'movement_type' => $request->movement_type,
-                'quantity'      => $request->movement_type === 'in' ? $request->quantity : -$request->quantity,
-                'unit_cost'     => $request->unit_cost,
-                'reference'     => $request->reference ?? 'MANUAL-'.time(),
-                'notes'         => $request->notes,
-                'created_by'    => auth()->id(),
+                'medicine_id'    => $request->medicine_id,
+                'warehouse_id'   => $request->warehouse_id ?? 1,
+                'pharmacy_id'    => auth()->user()->pharmacy_id ?? 1,
+                'movement_type'  => $request->movement_type,
+                'type'           => $request->movement_type, // Also set type field
+                'quantity'       => $request->movement_type === 'in' ? $request->quantity : -$request->quantity,
+                'reference_type' => 'manual',
+                'note'           => $request->reference ? "Ref: {$request->reference}" : null,
+                'notes'          => $request->notes,
+                'created_by'     => auth()->id(),
             ]);
+
+            // Update medicine stock
+            $medicine = Medicine::find($request->medicine_id);
+            if ($medicine) {
+                if ($request->movement_type === 'in') {
+                    $medicine->increment('stock', $request->quantity);
+                } else {
+                    $medicine->decrement('stock', $request->quantity);
+                }
+            }
 
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => 'Stock movement recorded.', 'movement' => $movement], 201);
@@ -92,6 +101,7 @@ class StockMovementController extends Controller
 
             return back()->with('success', 'Stock movement recorded successfully');
         } catch (\Exception $e) {
+            \Log::error('Stock movement error: ' . $e->getMessage());
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => $e->getMessage()], 500);
             }

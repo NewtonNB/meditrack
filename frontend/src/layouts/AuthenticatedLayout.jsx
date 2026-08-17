@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import { notifications as notifApi, search as searchApi } from '../api';
 
 /**
  * Each nav item may declare:
@@ -41,6 +42,7 @@ const NAV_ITEMS = [
     items: [
       { to: '/reports',          icon: 'bi-bar-chart',        label: 'Reports',         permission: 'view_reports' },
       { to: '/analytics',        icon: 'bi-graph-up',         label: 'Analytics',       permission: 'view_reports' },
+      { to: '/ai',               icon: 'bi-robot',            label: 'AI Insights',     permissions: ['view_reports', 'manage_medicines'] },
     ],
   },
   {
@@ -75,6 +77,51 @@ export default function AuthenticatedLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth >= 768 : true
   );
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  // Notification bell
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await notifApi.unreadCount();
+        setUnreadCount(res.data?.count ?? res.data?.unread_count ?? 0);
+      } catch { /* ignore */ }
+    };
+    fetchUnread();
+    const timer = setInterval(fetchUnread, 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Global search
+  const searchRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchQuery.length < 3) { setSearchResults(null); return; }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const res = await searchApi.global({ query: searchQuery });
+        setSearchResults(res.data);
+      } catch { setSearchResults(null); }
+      finally { setSearchLoading(false); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchResults(null);
+        setSearchQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setSidebarOpen(window.innerWidth >= 768);
@@ -82,10 +129,29 @@ export default function AuthenticatedLayout() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    setLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = async () => {
+    setLogoutConfirmOpen(false);
+    try {
+      await logout();
+    } catch (_err) {
+      // Continue with client-side cleanup even if API logout fails.
+    }
+
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_permissions');
+    localStorage.removeItem('auth_roles');
+
     toast.success('Logged out successfully.');
-    navigate('/login');
+    window.location.href = '/login';
+  };
+
+  const cancelLogout = () => {
+    setLogoutConfirmOpen(false);
   };
 
   // Check if a nav item is visible for the current user
@@ -138,7 +204,11 @@ export default function AuthenticatedLayout() {
                   <NavLink
                     key={to}
                     to={to}
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() => {
+                      if (window.innerWidth < 768) {
+                        setSidebarOpen(false);
+                      }
+                    }}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                         isActive
@@ -170,14 +240,25 @@ export default function AuthenticatedLayout() {
                   {roleBadge.label}
                 </span>
               </div>
-              <button onClick={handleLogout} title="Logout"
-                className="text-gray-400 hover:text-white transition-colors">
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Logout"
+                aria-label="Logout"
+                className="inline-flex items-center gap-2 rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600"
+              >
                 <i className="bi bi-box-arrow-right" />
+                Logout
               </button>
             </div>
           ) : (
-            <button onClick={handleLogout} title="Logout"
-              className="w-full flex justify-center text-gray-400 hover:text-white transition-colors">
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Logout"
+              aria-label="Logout"
+              className="w-full flex justify-center rounded-lg bg-red-500 p-2 text-white transition-colors hover:bg-red-600"
+            >
               <i className="bi bi-box-arrow-right" />
             </button>
           )}
@@ -190,15 +271,97 @@ export default function AuthenticatedLayout() {
         {/* Top bar */}
         <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 md:px-6">
           <button onClick={() => setSidebarOpen(v => !v)}
-            className="text-gray-500 hover:text-gray-700 transition-colors md:hidden">
+            className="text-gray-500 hover:text-gray-700 transition-colors">
             <i className="bi bi-list text-xl" />
           </button>
-          <div className="flex-1" />
 
-          {/* Role chip in header */}
+          {/* Global search */}
+          <div ref={searchRef} className="relative hidden sm:flex flex-1 max-w-sm">
+            <div className="relative w-full">
+              <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search medicines, customers, sales…"
+                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+              />
+              {searchLoading && <i className="bi bi-arrow-clockwise animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />}
+            </div>
+            {searchResults && (
+              <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-72 overflow-y-auto">
+                {(() => {
+                  const medicines = searchResults.medicines ?? [];
+                  const customers = searchResults.customers ?? [];
+                  const sales     = searchResults.sales ?? [];
+                  const total = medicines.length + customers.length + sales.length;
+                  if (total === 0) return <p className="px-4 py-3 text-sm text-gray-400">No results found.</p>;
+                  return (
+                    <>
+                      {medicines.length > 0 && (
+                        <>
+                          <p className="px-3 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Medicines</p>
+                          {medicines.slice(0, 4).map(m => (
+                            <button key={m.id} onClick={() => { navigate('/medicines'); setSearchResults(null); setSearchQuery(''); }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                              <i className="bi bi-capsule text-blue-500" />{m.name}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                      {customers.length > 0 && (
+                        <>
+                          <p className="px-3 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Customers</p>
+                          {customers.slice(0, 3).map(c => (
+                            <button key={c.id} onClick={() => { navigate('/customers'); setSearchResults(null); setSearchQuery(''); }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                              <i className="bi bi-person text-purple-500" />{c.name}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                      {sales.length > 0 && (
+                        <>
+                          <p className="px-3 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Sales</p>
+                          {sales.slice(0, 3).map(s => (
+                            <button key={s.id} onClick={() => { navigate('/sales'); setSearchResults(null); setSearchQuery(''); }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+                              <i className="bi bi-receipt text-green-500" />Sale #{s.id}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 sm:flex-none" />
+
+          {/* Role chip */}
           <span className={`hidden sm:inline-flex text-xs font-semibold text-white px-2.5 py-1 rounded-full ${roleBadge.cls}`}>
             {roleBadge.label}
           </span>
+
+          {/* Notification bell */}
+          <NavLink to="/notifications" className="relative text-gray-500 hover:text-gray-700 transition-colors p-1">
+            <i className="bi bi-bell text-xl" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </NavLink>
+
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-100"
+          >
+            <i className="bi bi-box-arrow-right" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
 
           <NavLink to="/profile" className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors">
             <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
@@ -213,6 +376,33 @@ export default function AuthenticatedLayout() {
           <Outlet />
         </main>
       </div>
+
+      {logoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-gray-900">Confirm logout</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Are you sure you want to sign out? Your current session will end, but you can log in again anytime.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={cancelLogout}
+                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Stay signed in
+              </button>
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="rounded-full bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -57,14 +57,14 @@ class StockPredictionService extends BaseAIService
             return $cached;
         }
 
-        $medicines = Medicine::where('status', 'active')->get();
+        $medicines = Medicine::all();
         $recommendations = [];
 
         foreach ($medicines as $medicine) {
             $prediction = $this->predictDemand($medicine->id, 30);
-            $currentStock = $medicine->stock_quantity ?? 0;
+            $currentStock    = $medicine->stock ?? 0;
             $predictedDemand = $prediction['predicted_demand'] ?? 0;
-            $safetyStock = $this->calculateSafetyStock($medicine);
+            $safetyStock     = $this->calculateSafetyStock($medicine);
             
             if ($currentStock < ($predictedDemand + $safetyStock)) {
                 $recommendations[] = [
@@ -119,41 +119,41 @@ class StockPredictionService extends BaseAIService
      */
     protected function prepareFeatures(Medicine $medicine, Collection $salesData, int $days): array
     {
-        $recentSales = $salesData->take(30);
-        $avgDailySales = $recentSales->avg('daily_quantity') ?? 0;
-        $salesTrend = $this->calculateTrend($recentSales);
+        $recentSales    = $salesData->take(30);
+        $avgDailySales  = $recentSales->avg('daily_quantity') ?? 0;
+        $salesTrend     = $this->calculateTrend($recentSales);
         $seasonalFactor = $this->getSeasonalFactor($medicine->id);
-        
+
         return [
-            'medicine_id' => $medicine->id,
-            'avg_daily_sales' => $avgDailySales,
-            'sales_trend' => $salesTrend,
-            'seasonal_factor' => $seasonalFactor,
-            'current_stock' => $medicine->stock_quantity ?? 0,
-            'price' => $medicine->price ?? 0,
-            'category' => $medicine->category ?? 'general',
-            'days_ahead' => $days,
+            'medicine_id'      => $medicine->id,
+            'avg_daily_sales'  => $avgDailySales,
+            'sales_trend'      => $salesTrend,
+            'seasonal_factor'  => $seasonalFactor,
+            'current_stock'    => $medicine->stock ?? 0,
+            'price'            => $medicine->selling_price ?? $medicine->unit_price ?? 0,
+            'category'         => $medicine->category ?? 'general',
+            'days_ahead'       => $days,
             'historical_sales' => $salesData->pluck('daily_quantity')->toArray(),
-            'dates' => $salesData->pluck('date')->toArray()
+            'dates'            => $salesData->pluck('date')->toArray(),
         ];
     }
 
     /**
      * Get historical sales data for a medicine
+     * Uses the sales table directly (no sale_items — each row is one line item)
      */
     protected function getHistoricalSalesData(int $medicineId, int $days = 90): Collection
     {
         return DB::table('sales')
-            ->join('sale_items', 'sales.id', '=', 'sale_items.sale_id')
-            ->where('sale_items.medicine_id', $medicineId)
-            ->where('sales.created_at', '>=', now()->subDays($days))
+            ->where('medicine_id', $medicineId)
+            ->where('created_at', '>=', now()->subDays($days))
             ->select(
-                DB::raw('DATE(sales.created_at) as date'),
-                DB::raw('SUM(sale_items.quantity) as daily_quantity'),
-                DB::raw('SUM(sale_items.quantity * sale_items.unit_price) as daily_revenue')
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(quantity) as daily_quantity'),
+                DB::raw('SUM(total_price) as daily_revenue')
             )
-            ->groupBy('date')
-            ->orderBy('date', 'desc')
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy(DB::raw('DATE(created_at)'), 'desc')
             ->get();
     }
 
@@ -162,14 +162,18 @@ class StockPredictionService extends BaseAIService
      */
     protected function handleNoHistoricalData(Medicine $medicine, int $days): array
     {
-        // Use category average or default prediction
-        $categoryAvg = $this->getCategoryAverageSales($medicine->category ?? 'general');
-        
+        $categoryAvg     = $this->getCategoryAverageSales($medicine->category ?? 'general');
+        $safetyStock     = $medicine->reorder_level ?? 5;
+        $currentStock    = $medicine->stock ?? 0;
+        $predictedDemand = $categoryAvg * $days;
+
         return [
-            'predicted_demand' => $categoryAvg * $days,
-            'confidence' => 0.3, // Low confidence due to no historical data
-            'method' => 'category_average',
-            'message' => 'Prediction based on category average due to insufficient historical data'
+            'predicted_demand'   => round($predictedDemand, 1),
+            'confidence'         => 0.3,
+            'method'             => 'category_average',
+            'recommended_action' => $currentStock < $safetyStock ? 'order_immediately' : 'monitor',
+            'safety_stock'       => $safetyStock,
+            'message'            => 'No sales history found. Prediction based on category average.',
         ];
     }
 
@@ -178,17 +182,26 @@ class StockPredictionService extends BaseAIService
      */
     protected function fallbackPrediction(Medicine $medicine, Collection $salesData, int $days): array
     {
-        $avgDailySales = $salesData->avg('daily_quantity') ?? 0;
-        $trend = $this->calculateTrend($salesData);
-        
-        // Simple linear prediction with trend
-        $predictedDemand = ($avgDailySales * $days) * (1 + $trend);
-        
+        $avgDailySales  = (float)($salesData->avg('daily_quantity') ?? 0);
+        $trend          = $this->calculateTrend($salesData);
+        $predictedDemand = max(0, ($avgDailySales * $days) * (1 + $trend));
+        $safetyStock     = $this->calculateSafetyStock($medicine);
+        $currentStock    = $medicine->stock ?? 0;
+
+        $recommended = 'maintain_stock';
+        if ($currentStock < $safetyStock) {
+            $recommended = 'order_immediately';
+        } elseif ($currentStock < ($predictedDemand + $safetyStock)) {
+            $recommended = 'reorder_soon';
+        }
+
         return [
-            'predicted_demand' => max(0, $predictedDemand),
-            'confidence' => 0.6,
-            'method' => 'fallback_linear',
-            'message' => 'Fallback prediction used due to AI service unavailability'
+            'predicted_demand'   => round($predictedDemand, 1),
+            'confidence'         => 0.6,
+            'method'             => 'statistical_fallback',
+            'recommended_action' => $recommended,
+            'safety_stock'       => round($safetyStock, 1),
+            'message'            => 'Prediction calculated from historical sales data.',
         ];
     }
 
@@ -197,13 +210,26 @@ class StockPredictionService extends BaseAIService
      */
     protected function processPredictionResult(Medicine $medicine, array $prediction, int $days): array
     {
+        $predictedDemand = $prediction['demand'] ?? 0;
+        $safetyStock     = $this->calculateSafetyStock($medicine);
+        $currentStock    = $medicine->stock ?? 0;
+
+        $recommended = 'maintain_stock';
+        if ($currentStock < $safetyStock) {
+            $recommended = 'order_immediately';
+        } elseif ($currentStock < ($predictedDemand + $safetyStock)) {
+            $recommended = 'reorder_soon';
+        }
+
         return [
-            'predicted_demand' => $prediction['demand'] ?? 0,
-            'confidence' => $prediction['confidence'] ?? 0.5,
-            'method' => 'ai_model',
-            'breakdown' => $prediction['daily_breakdown'] ?? [],
-            'factors' => $prediction['influencing_factors'] ?? [],
-            'model_version' => $this->currentModel?->version ?? 'unknown'
+            'predicted_demand'    => round($predictedDemand, 1),
+            'confidence'          => $prediction['confidence'] ?? 0.5,
+            'method'              => 'ai_model',
+            'recommended_action'  => $recommended,
+            'safety_stock'        => round($safetyStock, 1),
+            'breakdown'           => $prediction['daily_breakdown'] ?? [],
+            'factors'             => $prediction['influencing_factors'] ?? [],
+            'model_version'       => $this->currentModel?->version ?? 'unknown',
         ];
     }
 
@@ -228,17 +254,17 @@ class StockPredictionService extends BaseAIService
     protected function calculateSafetyStock(Medicine $medicine): float
     {
         $salesData = $this->getHistoricalSalesData($medicine->id, 30);
-        
+
         if ($salesData->isEmpty()) {
-            return 0;
+            return $medicine->reorder_level ?? 5;
         }
 
-        $avgSales = $salesData->avg('daily_quantity');
-        $stdDev = $this->calculateStandardDeviation($salesData->pluck('daily_quantity')->toArray());
-        
-        // Safety stock = Z-score * std deviation * sqrt(lead time)
-        // Using Z-score of 1.65 for 95% service level, lead time of 7 days
-        return 1.65 * $stdDev * sqrt(7);
+        $stdDev = $this->calculateStandardDeviation(
+            $salesData->pluck('daily_quantity')->map(fn($v) => (float)$v)->toArray()
+        );
+
+        // Z=1.65 for 95% service level, lead time = 7 days
+        return ceil(1.65 * $stdDev * sqrt(7));
     }
 
     /**
@@ -295,29 +321,25 @@ class StockPredictionService extends BaseAIService
     protected function getCategoryAverageSales(string $category): float
     {
         return DB::table('sales')
-            ->join('sale_items', 'sales.id', '=', 'sale_items.sale_id')
-            ->join('medicines', 'sale_items.medicine_id', '=', 'medicines.id')
+            ->join('medicines', 'sales.medicine_id', '=', 'medicines.id')
             ->where('medicines.category', $category)
             ->where('sales.created_at', '>=', now()->subDays(30))
-            ->avg('sale_items.quantity') ?? 1;
+            ->avg('sales.quantity') ?? 1;
     }
 
     protected function getSeasonalFactor(int $medicineId): float
     {
         $currentMonth = now()->month;
-        
-        // Get average sales for current month vs overall average
+
         $currentMonthSales = DB::table('sales')
-            ->join('sale_items', 'sales.id', '=', 'sale_items.sale_id')
-            ->where('sale_items.medicine_id', $medicineId)
-            ->whereMonth('sales.created_at', $currentMonth)
-            ->avg('sale_items.quantity') ?? 0;
-            
+            ->where('medicine_id', $medicineId)
+            ->whereMonth('created_at', $currentMonth)
+            ->avg('quantity') ?? 0;
+
         $overallAvg = DB::table('sales')
-            ->join('sale_items', 'sales.id', '=', 'sale_items.sale_id')
-            ->where('sale_items.medicine_id', $medicineId)
-            ->avg('sale_items.quantity') ?? 1;
-            
+            ->where('medicine_id', $medicineId)
+            ->avg('quantity') ?? 1;
+
         return $overallAvg > 0 ? $currentMonthSales / $overallAvg : 1;
     }
 

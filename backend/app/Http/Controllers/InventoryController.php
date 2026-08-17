@@ -12,6 +12,7 @@ use App\Models\Batch;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class InventoryController extends Controller
@@ -35,21 +36,113 @@ class InventoryController extends Controller
      */
     public function index(Request $request)
     {
-        $warehouseId = $request->get('warehouse_id');
+        try {
+            $warehouseId = $request->get('warehouse_id');
 
-        $data = [
-            'summary'         => $this->inventoryService->getInventorySummary($warehouseId),
-            'lowStockItems'   => $this->inventoryService->getLowStockItems($warehouseId)->take(10),
-            'expiringBatches' => $this->inventoryService->getExpiringBatches(30, $warehouseId)->take(10),
-            'recentMovements' => $this->inventoryService->getStockMovements(null, $warehouseId, 20),
-        ];
+            // Get summary
+            $totalItems = Medicine::count();
+            $lowStockItems = Medicine::where('stock', '<', 10)->count();
+            $outOfStockItems = Medicine::where('stock', '=', 0)->count();
+            $expiringBatches = Medicine::whereNotNull('expiry_date')
+                ->whereDate('expiry_date', '<=', now()->addDays(30))
+                ->count();
 
-        if ($request->is('api/*') || $request->expectsJson()) {
-            return response()->json($data);
+            // Get low stock items
+            $lowStock = Medicine::with('supplier:id,name')
+                ->where('stock', '<', 10)
+                ->where('stock', '>', 0)
+                ->orderBy('stock', 'asc')
+                ->limit(10)
+                ->get()
+                ->map(function ($med) {
+                    return [
+                        'id' => $med->id,
+                        'medicine' => [
+                            'name' => $med->name,
+                            'brand' => $med->brand,
+                        ],
+                        'batch_number' => $med->batch_number ?? 'N/A',
+                        'quantity_remaining' => $med->stock,
+                        'expiry_date' => $med->expiry_date,
+                    ];
+                });
+
+            // Get expiring batches
+            $expiring = Medicine::whereNotNull('expiry_date')
+                ->whereDate('expiry_date', '<=', now()->addDays(30))
+                ->whereDate('expiry_date', '>=', now())
+                ->orderBy('expiry_date', 'asc')
+                ->limit(10)
+                ->get()
+                ->map(function ($med) {
+                    return [
+                        'id' => $med->id,
+                        'medicine' => [
+                            'name' => $med->name,
+                        ],
+                        'batch_number' => $med->batch_number ?? 'N/A',
+                        'quantity_remaining' => $med->stock,
+                        'expiry_date' => $med->expiry_date,
+                    ];
+                });
+
+            // Get recent stock movements
+            $movements = StockMovement::with('medicine:id,name')
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get()
+                ->map(function ($mov) {
+                    return [
+                        'id' => $mov->id,
+                        'medicine' => [
+                            'name' => $mov->medicine->name ?? 'Unknown',
+                        ],
+                        'movement_type' => $mov->movement_type ?? $mov->type,
+                        'type' => $mov->movement_type ?? $mov->type,
+                        'quantity' => $mov->quantity,
+                        'reference' => $mov->reference,
+                        'notes' => $mov->notes ?? $mov->note,
+                        'created_at' => $mov->created_at,
+                    ];
+                });
+
+            $data = [
+                'summary' => [
+                    'total_items' => $totalItems,
+                    'low_stock_items' => $lowStockItems,
+                    'out_of_stock_items' => $outOfStockItems,
+                    'expiring_batches' => $expiringBatches,
+                ],
+                'lowStockItems' => $lowStock,
+                'expiringBatches' => $expiring,
+                'recentMovements' => $movements,
+            ];
+
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json($data);
+            }
+
+            $data['warehouses'] = Warehouse::active()->get();
+            return Inertia::render('Inventory/Dashboard', $data);
+        } catch (\Exception $e) {
+            Log::error('Inventory index error: ' . $e->getMessage());
+            
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'summary' => [
+                        'total_items' => 0,
+                        'low_stock_items' => 0,
+                        'out_of_stock_items' => 0,
+                        'expiring_batches' => 0,
+                    ],
+                    'lowStockItems' => [],
+                    'expiringBatches' => [],
+                    'recentMovements' => [],
+                ], 200);
+            }
+
+            return redirect()->back()->withErrors(['error' => 'Failed to load inventory data.']);
         }
-
-        $data['warehouses'] = Warehouse::active()->get();
-        return Inertia::render('Inventory/Dashboard', $data);
     }
 
 

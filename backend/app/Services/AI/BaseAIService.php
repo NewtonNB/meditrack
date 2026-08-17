@@ -42,7 +42,8 @@ abstract class BaseAIService implements AIServiceInterface
     protected function makeAIRequest(string $endpoint, array $data): array
     {
         try {
-            $response = Http::timeout(30)
+            $response = Http::timeout(3) // Fast fail — no external AI server in this environment
+                ->connectTimeout(2)
                 ->post("{$this->apiEndpoint}/{$endpoint}", [
                     'data' => $data,
                     'model_version' => $this->currentModel?->version ?? 'latest'
@@ -54,7 +55,7 @@ abstract class BaseAIService implements AIServiceInterface
 
             throw new \Exception("AI service request failed: " . $response->body());
         } catch (\Exception $e) {
-            Log::error("AI service error: " . $e->getMessage());
+            Log::debug("AI service unavailable, using fallback: " . $e->getMessage());
             throw $e;
         }
     }
@@ -87,10 +88,10 @@ abstract class BaseAIService implements AIServiceInterface
     public function isReady(): bool
     {
         try {
-            $response = Http::timeout(5)->get("{$this->apiEndpoint}/health");
+            $response = Http::timeout(2)->connectTimeout(1)->get("{$this->apiEndpoint}/health");
             return $response->successful();
         } catch (\Exception $e) {
-            return false;
+            return false; // External AI server not available — statistical fallback is used instead
         }
     }
 

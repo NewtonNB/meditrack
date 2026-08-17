@@ -1,6 +1,6 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useApi, getListItems } from '../hooks/useApi';
-import { sales as api } from '../api';
+import { sales as api, pos as posApi } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ConfirmDialog from '../Components/ConfirmDialog';
@@ -95,6 +95,22 @@ export default function Sales() {
       refetch();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to process refund.');
+    }
+  };
+
+  // ── Download Receipt ───────────────────────────────────────────────────────
+  const handleDownloadReceipt = async (id) => {
+    try {
+      const { data } = await posApi.receipt(id);
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Receipt downloaded successfully.');
+    } catch (err) {
+      toast.error('Failed to download receipt.');
     }
   };
 
@@ -292,20 +308,29 @@ export default function Sales() {
                       <p className="text-xs text-gray-400">{date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
                     </td>
 
-                    {/* Refund action */}
+                    {/* Actions */}
                     <td className="px-4 py-3 text-center">
-                      {canRefund
-                        ? <PermissionGate permission="process_sales">
-                            <button
-                              onClick={() => setConfirmId(s.id)}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-white hover:bg-orange-500 border border-orange-200 hover:border-orange-500 px-2.5 py-1 rounded-lg transition-colors"
-                              title="Process refund"
-                            >
-                              <i className="bi bi-arrow-counterclockwise" /> Refund
-                            </button>
-                          </PermissionGate>
-                        : <span className="text-xs text-gray-300">—</span>
-                      }
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handleDownloadReceipt(s.id)}
+                          title="Download Receipt"
+                          className="inline-flex items-center justify-center text-xs font-medium text-green-600 hover:text-white hover:bg-green-500 border border-green-200 hover:border-green-500 p-1.5 rounded-lg transition-colors"
+                        >
+                          <i className="bi bi-file-earmark-pdf" />
+                        </button>
+                        {canRefund
+                          ? <PermissionGate permission="process_sales">
+                              <button
+                                onClick={() => setConfirmId(s.id)}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-white hover:bg-orange-500 border border-orange-200 hover:border-orange-500 px-2 py-1.5 rounded-lg transition-colors"
+                                title="Process refund"
+                              >
+                                <i className="bi bi-arrow-counterclockwise" /> Refund
+                              </button>
+                            </PermissionGate>
+                          : null
+                        }
+                      </div>
                     </td>
                   </tr>
                 );

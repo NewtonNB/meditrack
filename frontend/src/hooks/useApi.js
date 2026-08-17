@@ -25,6 +25,9 @@ export function useApi(apiFn, deps = []) {
       const response = await apiFn();
       setData(response.data);
     } catch (err) {
+      if (err.response?.status === 401) {
+        return;
+      }
       setError(err.response?.data?.message || err.message || 'Something went wrong.');
     } finally {
       setLoading(false);

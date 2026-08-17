@@ -375,11 +375,11 @@ class AutomationService
             $criticalExpiry = $expiryReminders->where('urgency_level', 'critical');
             if ($criticalExpiry->count() > 0) {
                 $actions[] = [
-                    'type' => 'expiry',
+                    'type'     => 'expiry',
                     'priority' => 'critical',
-                    'title' => "URGENT: {$criticalExpiry->count()} medicines expiring within 7 days",
-                    'action' => 'View Expiry Alerts',
-                    'route' => 'medicines.index',
+                    'title'    => "URGENT: {$criticalExpiry->count()} medicines expiring within 7 days",
+                    'action'   => 'View Expiry Alerts',
+                    'route'    => '/medicines',
                 ];
             }
         }
@@ -388,11 +388,11 @@ class AutomationService
         $criticalReorders = $reorderSuggestions->where('urgency_level', 'critical');
         if ($criticalReorders->count() > 0) {
             $actions[] = [
-                'type' => 'reorder',
+                'type'     => 'reorder',
                 'priority' => 'critical',
-                'title' => "Urgent: {$criticalReorders->count()} medicines need immediate reordering",
-                'action' => 'View Reorder Suggestions',
-                'route' => 'automation.reorder-suggestions',
+                'title'    => "Urgent: {$criticalReorders->count()} medicines need immediate reordering",
+                'action'   => 'View Reorder Suggestions',
+                'route'    => '/automation',
             ];
         }
 
@@ -401,11 +401,11 @@ class AutomationService
             $highExpiry = $expiryReminders->where('urgency_level', 'high');
             if ($highExpiry->count() > 0) {
                 $actions[] = [
-                    'type' => 'expiry',
+                    'type'     => 'expiry',
                     'priority' => 'high',
-                    'title' => "{$highExpiry->count()} medicines expiring within 30 days",
-                    'action' => 'Review Expiry Alerts',
-                    'route' => 'medicines.index',
+                    'title'    => "{$highExpiry->count()} medicines expiring within 30 days",
+                    'action'   => 'Review Expiry Alerts',
+                    'route'    => '/medicines',
                 ];
             }
         }
@@ -414,11 +414,11 @@ class AutomationService
         $highReorders = $reorderSuggestions->where('urgency_level', 'high');
         if ($highReorders->count() > 0) {
             $actions[] = [
-                'type' => 'reorder',
+                'type'     => 'reorder',
                 'priority' => 'high',
-                'title' => "{$highReorders->count()} medicines recommended for reordering",
-                'action' => 'Review Suggestions',
-                'route' => 'automation.reorder-suggestions',
+                'title'    => "{$highReorders->count()} medicines recommended for reordering",
+                'action'   => 'Review Suggestions',
+                'route'    => '/automation',
             ];
         }
 

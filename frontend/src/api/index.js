@@ -22,6 +22,32 @@ export const medicines = {
   pricingReport:    ()       => client.get('/medicines/pricing-report'),
 };
 
+// ── Medicine Categories ──────────────────────────────────────────────────────
+export const medicineCategories = {
+  list:         (params)   => client.get('/medicine-categories', { params }),
+  create:       (data)     => client.post('/medicine-categories', data),
+  update:       (id, data) => client.put(`/medicine-categories/${id}`, data),
+  remove:       (id)       => client.delete(`/medicine-categories/${id}`),
+  restore:      (id)       => client.post(`/medicine-categories/${id}/restore`),
+  toggleActive: (id)       => client.post(`/medicine-categories/${id}/toggle-active`),
+};
+
+// ── Medicine Names ───────────────────────────────────────────────────────────
+export const medicineNames = {
+  list:   (params)   => client.get('/medicine-names', { params }),
+  create: (data)     => client.post('/medicine-names', data),
+  update: (id, data) => client.put(`/medicine-names/${id}`, data),
+  remove: (id)       => client.delete(`/medicine-names/${id}`),
+};
+
+// ── Medicine Brands ──────────────────────────────────────────────────────────
+export const medicineBrands = {
+  list:   (params)   => client.get('/medicine-brands', { params }),
+  create: (data)     => client.post('/medicine-brands', data),
+  update: (id, data) => client.put(`/medicine-brands/${id}`, data),
+  remove: (id)       => client.delete(`/medicine-brands/${id}`),
+};
+
 // ── Customers ────────────────────────────────────────────────────────────────
 export const customers = {
   list:       (params)   => client.get('/customers', { params }),

@@ -29,22 +29,30 @@ import Automation     from './pages/Automation';
 import SystemOverview from './pages/SystemOverview';
 import NotFound       from './pages/NotFound';
 import Forbidden      from './pages/Forbidden';
+import AI            from './pages/AI';
 
 // ── Guards ────────────────────────────────────────────────────────────────────
 
-function PrivateRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return (
+function LoadingScreen() {
+  return (
     <div className="flex items-center justify-center h-screen gap-2 text-gray-400">
       <i className="bi bi-arrow-clockwise animate-spin text-xl" /> Loading…
     </div>
   );
+}
+
+/** Blocks access to protected pages — redirects to /login if not authenticated. */
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
   return user ? children : <Navigate to="/login" replace />;
 }
 
+/** Blocks access to login/register — redirects to /dashboard if already logged in. */
 function GuestRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  // Show spinner while auth state is being determined — never skip login silently.
+  if (loading) return <LoadingScreen />;
   return user ? <Navigate to="/dashboard" replace /> : children;
 }
 
@@ -73,6 +81,7 @@ export default function App() {
   return (
     <Routes>
       {/* ── Guest ──────────────────────────────────────────────────────── */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
@@ -184,6 +193,13 @@ export default function App() {
         <Route path="/users" element={
           <RequirePermission permission="manage_users">
             <UserManagement />
+          </RequirePermission>
+        } />
+
+        {/* AI Insights — view_reports or manage_medicines */}
+        <Route path="/ai" element={
+          <RequirePermission permissions={['view_reports', 'manage_medicines']}>
+            <AI />
           </RequirePermission>
         } />
 

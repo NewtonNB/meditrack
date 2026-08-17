@@ -1,11 +1,12 @@
-﻿import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { pos as posApi, medicines as medicinesApi, sales as salesApi } from '../api';
 import { toast } from 'react-toastify';
+import Receipt from '../Components/Receipt';
 
 const PAYMENT_METHODS = ['Cash', 'Card', 'Mobile Money', 'Insurance'];
 
 // ─── Receipt Modal ────────────────────────────────────────────────────────────
-function ReceiptModal({ receipt, onClose }) {
+function ReceiptModal({ receipt, onClose, onPrintReceipt }) {
   if (!receipt) return null;
 
   return (
@@ -53,10 +54,17 @@ function ReceiptModal({ receipt, onClose }) {
           </div>
         </div>
 
-        <div className="px-6 pb-5">
+        <div className="px-6 pb-5 space-y-2">
+          <button
+            onClick={onPrintReceipt}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <i className="bi bi-printer" />
+            Print Receipt
+          </button>
           <button
             onClick={onClose}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-lg transition-colors"
           >
             New Sale
           </button>
@@ -71,7 +79,9 @@ export default function POS() {
   // Medicine search
   const [search, setSearch]           = useState('');
   const [results, setResults]         = useState([]);
+  const [allMedicines, setAllMedicines] = useState([]);
   const [searching, setSearching]     = useState(false);
+  const [loadingMedicines, setLoadingMedicines] = useState(true);
   const searchTimer                   = useRef(null);
 
   // Cart
@@ -82,6 +92,7 @@ export default function POS() {
   const [custResults, setCustResults] = useState([]);
   const [custSearching, setCustSearching] = useState(false);
   const [customer, setCustomer]       = useState(null);
+  const [loyaltyInfo, setLoyaltyInfo] = useState(null);
   const custTimer                     = useRef(null);
 
   // Payment
@@ -93,6 +104,8 @@ export default function POS() {
 
   // Receipt
   const [receipt, setReceipt]         = useState(null);
+  const [lastTransactionId, setLastTransactionId] = useState(null);
+  const [showFullReceipt, setShowFullReceipt] = useState(false);
 
   // ── Derived totals ──────────────────────────────────────────────────────────
   const subtotal   = cart.reduce((s, c) => s + c.selling_price * c.qty, 0);
@@ -100,15 +113,29 @@ export default function POS() {
   const total      = subtotal - discountAmt;
   const change     = Math.max((Number(amountPaid) || 0) - total, 0);
 
+  // ── Load all medicines on mount ────────────────────────────────────────────
+  useEffect(() => {
+    setLoadingMedicines(true);
+    medicinesApi.list({ per_page: 1000 })
+      .then(({ data }) => {
+        const list = data?.data ?? (Array.isArray(data) ? data : []);
+        setAllMedicines(list);
+      })
+      .catch(() => toast.error('Failed to load medicines.'))
+      .finally(() => setLoadingMedicines(false));
+  }, []);
+
   // ── Medicine search (debounced 300ms) ───────────────────────────────────────
   const searchMedicines = useCallback((q) => {
     clearTimeout(searchTimer.current);
-    if (!q.trim()) { setResults([]); return; }
+    if (!q.trim()) { 
+      setResults([]); 
+      return; 
+    }
     searchTimer.current = setTimeout(async () => {
       setSearching(true);
       try {
         const { data } = await medicinesApi.list({ search: q, per_page: 10 });
-        // medicines endpoint returns paginated: { data: [...] }
         const list = data?.data ?? (Array.isArray(data) ? data : []);
         setResults(list);
       } catch {
@@ -118,6 +145,9 @@ export default function POS() {
       }
     }, 300);
   }, []);
+
+  // Display medicines - search results if searching, otherwise all medicines
+  const displayMedicines = search.trim() ? results : allMedicines;
 
   // ── Customer search (debounced 300ms) ──────────────────────────────────────
   const searchCustomers = useCallback((q) => {
@@ -168,6 +198,7 @@ export default function POS() {
   const clearCart = () => {
     setCart([]);
     setCustomer(null);
+    setLoyaltyInfo(null);
     setCustSearch('');
     setDiscount('');
     setAmountPaid('');
@@ -211,6 +242,8 @@ export default function POS() {
         customer: customer?.name,
       });
 
+      const txId = `POS-${Date.now()}`;
+      setLastTransactionId(txId);
       clearCart();
       toast.success('Sale completed!');
     } catch (err) {
@@ -221,6 +254,22 @@ export default function POS() {
     } finally {
       setProcessing(false);
     }
+  };
+
+  // ── Print Receipt ───────────────────────────────────────────────────────────
+  const handlePrintReceipt = () => {
+    if (receipt) {
+      setShowFullReceipt(true);
+    }
+  };
+
+  const handleCloseFullReceipt = () => {
+    setShowFullReceipt(false);
+  };
+
+  const handleNewSale = () => {
+    setShowFullReceipt(false);
+    setReceipt(null);
   };
 
   // ── Keyboard shortcut: F2 focuses medicine search ──────────────────────────
@@ -270,39 +319,44 @@ export default function POS() {
                 autoComplete="off"
               />
               <i className="bi bi-capsule absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              {searching && (
+              {(searching || loadingMedicines) && (
                 <i className="bi bi-arrow-clockwise animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-blue-400" />
               )}
             </div>
 
-            {/* Search results dropdown */}
-            {results.length > 0 && (
-              <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden shadow-md">
-                {results.map(r => (
+            {/* Medicine grid */}
+            {loadingMedicines ? (
+              <div className="mt-4 text-center py-8">
+                <i className="bi bi-arrow-clockwise animate-spin text-2xl text-blue-400" />
+                <p className="text-sm text-gray-400 mt-2">Loading medicines...</p>
+              </div>
+            ) : displayMedicines.length > 0 ? (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                {displayMedicines.map(r => (
                   <button
                     key={r.id}
                     onClick={() => addToCart(r)}
-                    className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
+                    className="px-3 py-2.5 text-left hover:bg-blue-50 border border-gray-200 rounded-lg transition-colors"
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{r.name}</p>
-                        <p className="text-xs text-gray-400">{r.brand ?? ''}{r.category ? ` · ${r.category}` : ''}</p>
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{r.brand ?? ''}{r.category ? ` · ${r.category}` : ''}</p>
                       </div>
-                      <div className="text-right shrink-0 ml-4">
+                      <div className="text-right shrink-0">
                         <p className="text-sm font-semibold text-blue-600">UGX {Number(r.selling_price).toLocaleString()}</p>
                         <p className={`text-xs ${r.stock < 10 ? 'text-red-500' : 'text-gray-400'}`}>
-                          {r.stock} in stock
+                          {r.stock} stock
                         </p>
                       </div>
                     </div>
                   </button>
                 ))}
               </div>
-            )}
-
-            {search.trim() && !searching && results.length === 0 && (
-              <p className="text-sm text-gray-400 mt-2 text-center py-2">No medicines found.</p>
+            ) : (
+              <p className="text-sm text-gray-400 mt-4 text-center py-4">
+                {search.trim() ? 'No medicines found.' : 'No medicines available.'}
+              </p>
             )}
           </div>
 
@@ -391,18 +445,27 @@ export default function POS() {
             </h2>
 
             {customer ? (
-              <div className="flex items-center justify-between bg-blue-50 rounded-lg px-4 py-2.5">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{customer.name}</p>
-                  <p className="text-xs text-gray-500">{customer.phone ?? customer.email ?? '—'}</p>
+              <div>
+                <div className="flex items-center justify-between bg-blue-50 rounded-lg px-4 py-2.5">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{customer.name}</p>
+                    <p className="text-xs text-gray-500">{customer.phone ?? customer.email ?? '—'}</p>
+                  </div>
+                  <button
+                    onClick={() => { setCustomer(null); setLoyaltyInfo(null); setCustSearch(''); }}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    title="Remove customer"
+                  >
+                    <i className="bi bi-x-lg text-sm" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => { setCustomer(null); setCustSearch(''); }}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
-                  title="Remove customer"
-                >
-                  <i className="bi bi-x-lg text-sm" />
-                </button>
+                {loyaltyInfo && (
+                  <div className="mt-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-sm">
+                    <i className="bi bi-star-fill text-purple-500 mr-1" />
+                    <span className="text-purple-700 font-medium">{loyaltyInfo.points_balance ?? 0} loyalty points</span>
+                    {loyaltyInfo.tier && <span className="ml-2 text-purple-400 text-xs capitalize">{loyaltyInfo.tier} tier</span>}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="relative">
@@ -423,7 +486,13 @@ export default function POS() {
                     {custResults.map(c => (
                       <button
                         key={c.id}
-                        onClick={() => { setCustomer(c); setCustSearch(''); setCustResults([]); }}
+                        onClick={async () => {
+                          setCustomer(c); setCustSearch(''); setCustResults([]);
+                          try {
+                            const res = await posApi.customerLoyalty(c.id);
+                            setLoyaltyInfo(res.data ?? null);
+                          } catch { setLoyaltyInfo(null); }
+                        }}
                         className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-50 last:border-0 text-sm transition-colors"
                       >
                         <p className="font-medium text-gray-900">{c.name}</p>
@@ -550,12 +619,45 @@ export default function POS() {
                 </>
               )}
             </button>
+
+            {lastTransactionId && (
+              <button
+                onClick={() => handlePrintReceipt()}
+                className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+              >
+                <i className="bi bi-printer" />
+                Print Last Receipt
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Receipt / success modal */}
-      <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />
+      <ReceiptModal 
+        receipt={receipt} 
+        onClose={() => setReceipt(null)} 
+        onPrintReceipt={handlePrintReceipt}
+      />
+
+      {/* Full detailed receipt for printing */}
+      {showFullReceipt && receipt && (
+        <Receipt 
+          sale={{
+            id: receipt.transaction_id,
+            invoice: receipt.transaction_id,
+            total_amount: receipt.total,
+            items: receipt.items, // Pass full items array
+            customer_name: receipt.customer || null,
+            payment_method: receipt.payment_method,
+            notes: notes || null,
+            sold_at: new Date().toISOString(),
+            change: receipt.change || 0,
+          }}
+          onClose={handleCloseFullReceipt}
+          onNewSale={handleNewSale}
+        />
+      )}
     </div>
   );
 }

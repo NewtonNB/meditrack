@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Modal from './Modal';
+import Receipt from './Receipt';
 import { medicines as medicinesApi, customers as customersApi, sales as salesApi } from '../api';
 import { toast } from 'react-toastify';
 
@@ -20,12 +21,11 @@ export default function SaleModal({ isOpen, onClose, onSave }) {
   const [notes,          setNotes]          = useState('');
   const [loading,        setLoading]        = useState(false);
   const [errors,         setErrors]         = useState({});
+  const [completedSale,  setCompletedSale]  = useState(null);
 
-  // ── Medicine search ────────────────────────────────────────────────────────
-  const [medSearch,      setMedSearch]      = useState('');
-  const [medResults,     setMedResults]     = useState([]);
-  const [medSearching,   setMedSearching]   = useState(false);
-  const medTimer = useRef(null);
+  // ── Medicine list ──────────────────────────────────────────────────────────
+  const [medicines,      setMedicines]      = useState([]);
+  const [loadingMeds,    setLoadingMeds]    = useState(false);
 
   // ── Customer search ────────────────────────────────────────────────────────
   const [custSearch,     setCustSearch]     = useState('');
@@ -38,25 +38,18 @@ export default function SaleModal({ isOpen, onClose, onSave }) {
     if (isOpen) {
       setMedicine(null); setCustomer(null);
       setQuantity('1'); setPaymentMethod('cash'); setNotes('');
-      setMedSearch(''); setMedResults([]);
       setCustSearch(''); setCustResults([]);
       setErrors({});
+      setCompletedSale(null);
+      
+      // Load all medicines
+      setLoadingMeds(true);
+      medicinesApi.list({ per_page: 1000 })
+        .then(({ data }) => setMedicines(data?.data ?? (Array.isArray(data) ? data : [])))
+        .catch(() => toast.error('Failed to load medicines.'))
+        .finally(() => setLoadingMeds(false));
     }
   }, [isOpen]);
-
-  // ── Medicine search (debounced) ────────────────────────────────────────────
-  const searchMeds = useCallback((q) => {
-    clearTimeout(medTimer.current);
-    if (!q.trim()) { setMedResults([]); return; }
-    medTimer.current = setTimeout(async () => {
-      setMedSearching(true);
-      try {
-        const { data } = await medicinesApi.list({ search: q, per_page: 8 });
-        setMedResults(data?.data ?? (Array.isArray(data) ? data : []));
-      } catch { setMedResults([]); }
-      finally { setMedSearching(false); }
-    }, 300);
-  }, []);
 
   // ── Customer search (debounced) ────────────────────────────────────────────
   const searchCusts = useCallback((q) => {
@@ -95,7 +88,7 @@ export default function SaleModal({ isOpen, onClose, onSave }) {
 
     setLoading(true);
     try {
-      await salesApi.create({
+      const response = await salesApi.create({
         medicine_id:    medicine.id,
         customer_id:    customer?.id ?? null,
         quantity:       parseInt(quantity),
@@ -103,9 +96,24 @@ export default function SaleModal({ isOpen, onClose, onSave }) {
         payment_method: paymentMethod,
         notes:          notes.trim() || null,
       });
+      
+      // Store completed sale data for receipt
+      const saleData = response.data?.sale || response.data;
+      setCompletedSale({
+        id: saleData.id,
+        invoice: saleData.invoice,
+        total_amount: saleData.total_price || saleData.total_amount,
+        medicine_name: medicine.name,
+        customer_name: customer?.name || null,
+        payment_method: paymentMethod,
+        quantity: parseInt(quantity),
+        unit_price: unitPrice,
+        notes: notes.trim() || null,
+        sold_at: saleData.sold_at || new Date().toISOString(),
+      });
+      
       toast.success('Sale recorded successfully.');
       onSave();
-      onClose();
     } catch (err) {
       if (err.response?.status === 422) {
         const raw = err.response.data.errors ?? {};
@@ -123,6 +131,26 @@ export default function SaleModal({ isOpen, onClose, onSave }) {
     ? <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><i className="bi bi-exclamation-circle" />{Array.isArray(errors[k]) ? errors[k][0] : errors[k]}</p>
     : null;
 
+  // Show receipt immediately after sale completed
+  if (completedSale) {
+    return (
+      <Receipt 
+        sale={completedSale} 
+        onClose={onClose}
+        onNewSale={() => {
+          // Reset form for new sale
+          setCompletedSale(null);
+          setMedicine(null);
+          setCustomer(null);
+          setQuantity('1');
+          setPaymentMethod('cash');
+          setNotes('');
+          setErrors({});
+        }}
+      />
+    );
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Record New Sale">
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -133,8 +161,29 @@ export default function SaleModal({ isOpen, onClose, onSave }) {
             Medicine <span className="text-red-500">*</span>
           </label>
 
-          {medicine ? (
-            <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5">
+          <select
+            value={medicine?.id ?? ''}
+            onChange={e => {
+              const selected = medicines.find(m => m.id === parseInt(e.target.value));
+              setMedicine(selected || null);
+              if (errors.medicine) setErrors(p => { const n={...p}; delete n.medicine; return n; });
+            }}
+            disabled={loadingMeds}
+            className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.medicine ? 'border-red-400 bg-red-50' : 'border-gray-300'
+            } ${loadingMeds ? 'opacity-50 cursor-wait' : ''}`}>
+            <option value="">
+              {loadingMeds ? 'Loading medicines...' : 'Select a medicine...'}
+            </option>
+            {medicines.map(m => (
+              <option key={m.id} value={m.id} disabled={m.stock === 0}>
+                {m.name} {m.brand ? `(${m.brand})` : ''} - UGX {Number(m.selling_price).toLocaleString()} · {m.stock} in stock
+              </option>
+            ))}
+          </select>
+
+          {medicine && (
+            <div className="mt-2 flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
               <div>
                 <p className="text-sm font-semibold text-gray-900">{medicine.name}</p>
                 <p className="text-xs text-gray-500">
@@ -144,44 +193,9 @@ export default function SaleModal({ isOpen, onClose, onSave }) {
                   </span>
                 </p>
               </div>
-              <button type="button" onClick={() => { setMedicine(null); setMedSearch(''); }}
-                className="text-gray-400 hover:text-red-500 transition-colors ml-3">
-                <i className="bi bi-x-lg text-sm" />
-              </button>
-            </div>
-          ) : (
-            <div className="relative">
-              <i className="bi bi-capsule absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-              <input
-                type="text"
-                placeholder="Search medicine by name…"
-                value={medSearch}
-                onChange={e => { setMedSearch(e.target.value); searchMeds(e.target.value); if (errors.medicine) setErrors(p => { const n={...p}; delete n.medicine; return n; }); }}
-                className={`w-full border rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.medicine ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
-                autoComplete="off"
-              />
-              {medSearching && <i className="bi bi-arrow-clockwise animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 text-sm" />}
-              {medResults.length > 0 && (
-                <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-52 overflow-y-auto">
-                  {medResults.map(m => (
-                    <button key={m.id} type="button"
-                      onClick={() => { setMedicine(m); setMedSearch(''); setMedResults([]); }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors">
-                      <p className="text-sm font-medium text-gray-900">{m.name} {m.brand ? <span className="text-gray-400 font-normal">· {m.brand}</span> : ''}</p>
-                      <p className="text-xs text-gray-400">
-                        UGX {Number(m.selling_price).toLocaleString()}
-                        &nbsp;·&nbsp;
-                        <span className={m.stock < 10 ? 'text-amber-600 font-medium' : ''}>{m.stock} in stock</span>
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {medSearch.trim() && !medSearching && medResults.length === 0 && (
-                <p className="text-xs text-gray-400 mt-1">No medicines found.</p>
-              )}
             </div>
           )}
+
           <FieldError k="medicine" />
         </div>
 

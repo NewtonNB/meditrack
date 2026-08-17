@@ -329,12 +329,12 @@ class DashboardController extends Controller
         $lowStockCount = Medicine::where('stock', '<', 10)->count();
         if ($lowStockCount > 0) {
             $insights[] = [
-                'type' => 'warning',
-                'title' => 'Low Stock Alert',
+                'type'    => 'warning',
+                'title'   => 'Low Stock Alert',
                 'message' => "{$lowStockCount} medicines are running low on stock",
-                'action' => 'View Reorder Suggestions',
-                'route' => '/automation/reorder-suggestions',
-                'icon' => 'exclamation-triangle',
+                'action'  => 'View Reorder Suggestions',
+                'route'   => '/automation',
+                'icon'    => 'exclamation-triangle',
             ];
         }
 
@@ -344,12 +344,12 @@ class DashboardController extends Controller
             ->count();
         if ($expiringCount > 0) {
             $insights[] = [
-                'type' => 'danger',
-                'title' => 'Expiry Alert',
+                'type'    => 'danger',
+                'title'   => 'Expiry Alert',
                 'message' => "{$expiringCount} medicines expiring within 30 days",
-                'action' => 'View Expiry Alerts',
-                'route' => '/medicines',
-                'icon' => 'clock',
+                'action'  => 'View Expiry Alerts',
+                'route'   => '/medicines',
+                'icon'    => 'clock',
             ];
         }
 
@@ -360,26 +360,26 @@ class DashboardController extends Controller
         if ($todayRevenue > $yesterdayRevenue) {
             $increase = (($todayRevenue - $yesterdayRevenue) / max($yesterdayRevenue, 1)) * 100;
             $insights[] = [
-                'type' => 'success',
-                'title' => 'Sales Growth',
+                'type'    => 'success',
+                'title'   => 'Sales Growth',
                 'message' => "Revenue increased by " . number_format($increase, 1) . "% from yesterday",
-                'action' => 'View Sales Report',
-                'route' => '/reports',
-                'icon' => 'trending-up',
+                'action'  => 'View Sales Report',
+                'route'   => '/reports',
+                'icon'    => 'trending-up',
             ];
         }
 
         // Automation insights
         $automationSummary = $this->automationService->getDashboardSummary();
-        if ($automationSummary['quick_actions']) {
+        if (!empty($automationSummary['quick_actions'])) {
             foreach ($automationSummary['quick_actions'] as $action) {
                 $insights[] = [
-                    'type' => $action['priority'] === 'critical' ? 'danger' : 'warning',
-                    'title' => 'Smart Automation',
+                    'type'    => $action['priority'] === 'critical' ? 'danger' : 'warning',
+                    'title'   => 'Smart Automation',
                     'message' => $action['title'],
-                    'action' => $action['action'],
-                    'route' => $action['route'],
-                    'icon' => 'robot',
+                    'action'  => $action['action'],
+                    'route'   => $action['route'],
+                    'icon'    => 'robot',
                 ];
             }
         }

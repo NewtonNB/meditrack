@@ -12,10 +12,53 @@ class SettingsController extends Controller
 {
     public function index(Request $request)
     {
-        $user     = Auth::user();
-        $settings = ['timezone' => $user->timezone ?? 'UTC', 'language' => $user->language ?? 'en', 'pharmacy_name' => $user->pharmacy_name ?? 'MediTrack Pharmacy', 'currency' => $user->currency ?? 'UGX', 'email_notifications' => $user->email_notifications ?? true, 'low_stock_alerts' => $user->low_stock_alerts ?? true, 'expiry_alerts' => $user->expiry_alerts ?? true, 'two_factor_enabled' => $user->two_factor_enabled ?? false, 'session_timeout' => $user->session_timeout ?? 30];
+        $user = Auth::user();
 
-        $data = ['user' => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'phone' => $user->phone, 'bio' => $user->bio, 'role' => $user->role ?? 'user'], 'settings' => $settings];
+        $data = [
+            'user' => [
+                'id'               => $user->id,
+                'name'             => $user->name,
+                'email'            => $user->email,
+                'phone'            => $user->phone ?? '',
+                'bio'              => $user->bio ?? '',
+                'role'             => $user->role ?? 'user',
+                'timezone'         => $user->timezone ?? 'UTC',
+                'language'         => $user->language ?? 'en',
+                // Pharmacy / financial
+                'pharmacy_name'    => $user->pharmacy_name ?? '',
+                'pharmacy_address' => $user->pharmacy_address ?? '',
+                'pharmacy_phone'   => $user->pharmacy_phone ?? '',
+                'pharmacy_email'   => $user->pharmacy_email ?? '',
+                'license_number'   => $user->license_number ?? '',
+                'tax_rate'         => $user->tax_rate ?? '0.00',
+                'currency'         => $user->currency ?? 'UGX',
+                'receipt_footer'   => $user->receipt_footer ?? '',
+                'bank_accounts'    => $user->bank_accounts ?? '',
+                'payment_gateways' => $user->payment_gateways ?? '',
+                // Notifications
+                'email_notifications' => (bool) ($user->email_notifications ?? true),
+                'sms_notifications'   => (bool) ($user->sms_notifications   ?? false),
+                'push_notifications'  => (bool) ($user->push_notifications  ?? true),
+                'low_stock_alerts'    => (bool) ($user->low_stock_alerts    ?? true),
+                'expiry_alerts'       => (bool) ($user->expiry_alerts       ?? true),
+                'sales_reports'       => (bool) ($user->sales_reports       ?? true),
+                'system_updates'      => (bool) ($user->system_updates      ?? true),
+                'marketing_emails'    => (bool) ($user->marketing_emails    ?? false),
+                // Security
+                'two_factor_enabled'      => (bool) ($user->two_factor_enabled      ?? false),
+                'session_timeout'         => $user->session_timeout         ?? 30,
+                'password_expiry'         => $user->password_expiry         ?? 90,
+                'login_attempts'          => $user->login_attempts          ?? 5,
+                'require_password_change' => (bool) ($user->require_password_change ?? false),
+                // System
+                'auto_backup'      => (bool) ($user->auto_backup      ?? true),
+                'backup_frequency' => $user->backup_frequency ?? 'daily',
+                'data_retention'   => $user->data_retention   ?? 365,
+                'maintenance_mode' => (bool) ($user->maintenance_mode ?? false),
+                'debug_mode'       => (bool) ($user->debug_mode       ?? false),
+                'cache_enabled'    => (bool) ($user->cache_enabled    ?? true),
+            ],
+        ];
 
         if ($request->is('api/*') || $request->expectsJson()) {
             return response()->json($data);
@@ -136,11 +179,14 @@ class SettingsController extends Controller
 
     public function exportSettings(Request $request)
     {
-        $user     = Auth::user()->toArray();
+        $user = Auth::user()->toArray();
         unset($user['password'], $user['remember_token'], $user['email_verified_at']);
         $filename = 'meditrack_settings_' . date('Y-m-d_H-i-s') . '.json';
-        return response()->json($user)
-            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
+        $json     = json_encode($user, JSON_PRETTY_PRINT);
+
+        return response($json, 200)
+            ->header('Content-Type', 'application/json')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 
     public function clearCache(Request $request)

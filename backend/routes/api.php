@@ -112,6 +112,38 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
 
+    // ── Medicine Categories ────────────────────────────────────────────────
+    Route::prefix('medicine-categories')->name('api.medicine-categories.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MedicineCategoryController::class, 'index']);
+        Route::middleware('permission:manage_medicines')->group(function () {
+            Route::post('/', [\App\Http\Controllers\MedicineCategoryController::class, 'store']);
+            Route::put('/{category}', [\App\Http\Controllers\MedicineCategoryController::class, 'update']);
+            Route::delete('/{category}', [\App\Http\Controllers\MedicineCategoryController::class, 'destroy']);
+            Route::post('/{category}/restore', [\App\Http\Controllers\MedicineCategoryController::class, 'restore']);
+            Route::post('/{category}/toggle-active', [\App\Http\Controllers\MedicineCategoryController::class, 'toggleActive']);
+        });
+    });
+
+    // ── Medicine Names ─────────────────────────────────────────────────────
+    Route::prefix('medicine-names')->name('api.medicine-names.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MedicineNameController::class, 'index']);
+        Route::middleware('permission:manage_medicines')->group(function () {
+            Route::post('/', [\App\Http\Controllers\MedicineNameController::class, 'store']);
+            Route::put('/{name}', [\App\Http\Controllers\MedicineNameController::class, 'update']);
+            Route::delete('/{name}', [\App\Http\Controllers\MedicineNameController::class, 'destroy']);
+        });
+    });
+
+    // ── Medicine Brands ────────────────────────────────────────────────────
+    Route::prefix('medicine-brands')->name('api.medicine-brands.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MedicineBrandController::class, 'index']);
+        Route::middleware('permission:manage_medicines')->group(function () {
+            Route::post('/', [\App\Http\Controllers\MedicineBrandController::class, 'store']);
+            Route::put('/{brand}', [\App\Http\Controllers\MedicineBrandController::class, 'update']);
+            Route::delete('/{brand}', [\App\Http\Controllers\MedicineBrandController::class, 'destroy']);
+        });
+    });
+
     // ── Customers ──────────────────────────────────────────────────────────
     Route::prefix('customers')->name('api.customers.')->group(function () {
         Route::get('/', [CustomerController::class, 'index']);
