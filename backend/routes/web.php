@@ -196,9 +196,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/audit-logs/{auditLog}/flag', [App\Http\Controllers\AuditLogController::class, 'flagForReview'])->name('audit.flag');
         Route::get('/security/dashboard', [App\Http\Controllers\AuditLogController::class, 'securityDashboard'])->name('security.dashboard');
         Route::get('/compliance/dashboard', [App\Http\Controllers\AuditLogController::class, 'complianceDashboard'])->name('compliance.dashboard');
-        
-        // Legacy routes for backward compatibility
-        Route::get('/audit-logs/security', [App\Http\Controllers\AuditController::class, 'security'])->name('audit.security');
     });
 
     // AI & Smart Assistance routes

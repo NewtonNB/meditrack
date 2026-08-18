@@ -21,7 +21,6 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\AuditLogController;
-use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SystemOverviewController;

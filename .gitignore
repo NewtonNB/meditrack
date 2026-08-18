@@ -36,6 +36,12 @@ Thumbs.db
 /backend/database_explorer.php
 /backend/debug*.php
 /backend/temp*.php
+/backend/app/Console/Commands/Test*.php
+/backend/app/Console/Commands/Check*.php
+/backend/app/Console/Commands/Debug*.php
+/backend/app/Console/Commands/Show*.php
+/backend/app/Console/Commands/*Optimization.php
+/backend/app/Console/Commands/Grant*.php
 *.tmp
 *.backup
 
