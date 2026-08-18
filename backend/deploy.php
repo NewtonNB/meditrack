@@ -56,18 +56,8 @@ if ($return !== 0) {
 }
 echo "\n";
 
-// Step 4: Test the system
-echo "4️⃣ Testing RBAC and Audit system...\n";
-exec('php artisan test:audit-system', $output, $return);
-if ($return !== 0) {
-    echo "⚠️  Warning: Some tests failed, but core system should work\n";
-} else {
-    echo "✅ All tests passed\n";
-}
-echo "\n";
-
-// Step 5: Generate key if needed
-echo "5️⃣ Checking application key...\n";
+// Step 4: Generate key if needed
+echo "4️⃣ Checking application key...\n";
 $envContent = file_get_contents('.env');
 if (strpos($envContent, 'APP_KEY=') === false || strpos($envContent, 'APP_KEY=base64:') === false) {
     echo "Generating application key...\n";

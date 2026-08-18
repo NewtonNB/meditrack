@@ -35,18 +35,9 @@ Route::get('/csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 })->middleware('auth');
 
-// Test route to verify dashboard is working
-Route::get('/test-dashboard', function () {
-    return response()->json([
-        'message' => 'Dashboard route is working!',
-        'user' => Auth::user() ? Auth::user()->email : 'Not logged in',
-        'timestamp' => now()->toDateTimeString()
-    ]);
-})->middleware(['auth'])->name('test.dashboard');
 Route::get('/dashboard/enhanced', [DashboardController::class, 'enhanced'])->middleware(['auth', 'verified'])->name('dashboard.enhanced');
 
 Route::get('/system-overview', [App\Http\Controllers\SystemOverviewController::class, 'index'])->middleware(['auth', 'verified'])->name('system.overview');
-// Moved to API section below
 
 // Moved to API section below
 
@@ -179,15 +170,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/user-management/{user}/avatar', [App\Http\Controllers\UserManagementController::class, 'uploadAvatar'])->name('users.avatar.upload');
         Route::delete('/user-management/{user}/avatar', [App\Http\Controllers\UserManagementController::class, 'deleteAvatar'])->name('users.avatar.delete');
     });
-    
-    // Test route for debugging user management
-    Route::get('/user-management-test', function () {
-        $controller = new App\Http\Controllers\UserManagementController(
-            new App\Services\PermissionService(),
-            new App\Services\AuditTrailService()
-        );
-        return $controller->index();
-    })->middleware(['auth'])->name('users.management.test');
 
     // Enhanced Audit Trail routes (Admin only)
     Route::middleware('permission:view_audit_logs')->group(function () {

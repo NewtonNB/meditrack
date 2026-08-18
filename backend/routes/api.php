@@ -215,7 +215,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/preferences', [NotificationController::class, 'updatePreferences']);
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
         Route::post('/cleanup', [NotificationController::class, 'cleanup']);
-        Route::post('/test', [NotificationController::class, 'test']);
         Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::post('/{id}/dismiss', [NotificationController::class, 'dismiss']);
     });
