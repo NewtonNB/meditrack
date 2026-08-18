@@ -164,11 +164,14 @@ class DashboardController extends Controller
             ->take(8)
             ->get()
             ->map(function ($sale) {
+                $medicineName = $sale->medicine->name ?? 'Unknown Medicine';
+                $customerName = $sale->customer->name ?? 'Walk-in Customer';
+                
                 return [
                     'id' => $sale->id,
                     'type' => 'sale',
                     'title' => 'Sale Completed',
-                    'description' => "{$sale->medicine->name} sold to " . ($sale->customer->name ?? 'Walk-in Customer'),
+                    'description' => "{$medicineName} sold to {$customerName}",
                     'details' => "Qty: {$sale->quantity} • Invoice: #{$sale->id}",
                     'amount' => $sale->total_price,
                     'time' => $sale->created_at->diffForHumans(),

@@ -27,6 +27,18 @@ Thumbs.db
 /backend/storage/logs/*
 /backend/vendor
 
+# Test and temporary files
+/backend/test*.php
+/backend/test*.ps1
+/backend/check_*.php
+/backend/create_*.php
+/backend/*_backup.json
+/backend/database_explorer.php
+/backend/debug*.php
+/backend/temp*.php
+*.tmp
+*.backup
+
 # Frontend (React SPA)
 /frontend/node_modules
 /frontend/dist
